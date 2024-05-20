@@ -25,16 +25,17 @@ A filter is set of filters applied to your data that you define. For example, a 
 A format is a pre-defined way a piece of data can be viewed. It might be as a table or a graph.
 
 # Quick Start
-**Install the package:**
+## Install the package
 `composer require calvient/arbol`
 
-**Publish the package assets:**
+## Publish the package assets and run migrations
 `php artisan vendor:publish --provider="Calvient\Arbol\ArbolServiceProvider" --tag="arbol-config"`
+`php artisan migrate`
 
-**Create a New Series**
+## Create a New Series
 `php artisan make:arbol-series PodcastStreams`
 
-**Add Data and Configuration**
+## Add Data and Configuration
 Example:
 ```php
 <?php
