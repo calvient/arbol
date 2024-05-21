@@ -1,9 +1,49 @@
-# Arbol
-Arbol is a simple data visualization tool for Laravel applications built using 
+# A simple data visualization tool for Laravel apps.
+
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/calvient/arbol.svg?style=flat-square)](https://packagist.org/packages/calvient/arbol)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/calvient/arbol/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/calvient/arbol/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/calvient/arbol/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/calvient/arbol/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/calvient/arbol.svg?style=flat-square)](https://packagist.org/packages/calvient/arbol)
+
+Arbol is a simple data visualization tool for Laravel applications built using
 
 It allows customers to create their own reports, extracts, and simple dashboards.
 
 This is a simple tool that solves 80% of a complex problem! So you may still want a paid data visualization tool. But if you need something simple, this might just be for you.
+
+## Installation
+
+You can install the package via composer:
+
+```bash
+composer require calvient/arbol
+```
+
+You can publish and run the migrations with:
+
+```bash
+php artisan vendor:publish --tag="arbol-migrations"
+php artisan migrate
+```
+
+You can publish the config file with:
+
+```bash
+php artisan vendor:publish --tag="arbol-config"
+```
+
+This is the contents of the published config file:
+
+```php
+return [
+];
+```
+
+Optionally, you can publish the views using
+
+```bash
+php artisan vendor:publish --tag="arbol-views"
+```
 
 # Core concepts
 Arbol works by using these 4 concepts:
@@ -77,5 +117,21 @@ class PodcastStreams {
 }
 ```
 
-**Access the Dashboard**
-Visit `/arbol/dashboard` to see your dashboard. You can mount it within other parts of your app within an iframe.
+## Testing
+
+```bash
+composer test
+```
+
+## Changelog
+
+Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+
+## Credits
+
+- [Jonathan Minson](https://github.com/jonathanminson)
+- [All Contributors](../../contributors)
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
