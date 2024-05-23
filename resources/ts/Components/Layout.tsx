@@ -1,10 +1,13 @@
 import {FC, ReactNode} from 'react';
 import {Box, Button, ChakraProvider, HStack, theme} from '@calvient/decal';
 import {Link} from '@inertiajs/react';
+import {QueryClient, QueryClientProvider} from 'react-query';
 
 interface LayoutProps {
   children: ReactNode;
 }
+
+const queryClient = new QueryClient();
 
 const Layout: FC<LayoutProps> = ({children}) => {
   const path = window.location.pathname;
@@ -22,49 +25,59 @@ const Layout: FC<LayoutProps> = ({children}) => {
   };
 
   return (
-    <ChakraProvider theme={theme}>
-      <Box position={'fixed'} left={0} top={0} bottom={0} right={0} bg='gray.50' overflow={'auto'}>
-        <Box w={'auto'}>
-          <Box
-            m={4}
-            p={4}
-            bgColor={'white'}
-            border={'solid 1px'}
-            borderColor={'gray.200'}
-            borderRadius={'md'}
-          >
-            <HStack divider={<>/</>} spacing={4}>
-              {pathParts.map((part, index) => {
-                const href = `/arbol/${pathParts.slice(0, index + 1).join('/')}`;
+    <QueryClientProvider client={queryClient}>
+      <ChakraProvider theme={theme}>
+        <Box
+          position={'fixed'}
+          left={0}
+          top={0}
+          bottom={0}
+          right={0}
+          bg='gray.50'
+          overflow={'auto'}
+        >
+          <Box w={'auto'}>
+            <Box
+              m={4}
+              p={4}
+              bgColor={'white'}
+              border={'solid 1px'}
+              borderColor={'gray.200'}
+              borderRadius={'md'}
+            >
+              <HStack divider={<>/</>} spacing={4}>
+                {pathParts.map((part, index) => {
+                  const href = `/arbol/${pathParts.slice(0, index + 1).join('/')}`;
 
-                return (
-                  <Button
-                    key={part}
-                    size={'sm'}
-                    variant={'ghost'}
-                    as={Link}
-                    href={href}
-                    colorScheme={pathParts.length === index + 1 ? 'blue' : 'gray'}
-                  >
-                    {getPathTitle(part)}
-                  </Button>
-                );
-              })}
-            </HStack>
-          </Box>
-          <Box
-            m={4}
-            p={4}
-            bgColor={'white'}
-            border={'solid 1px'}
-            borderColor={'gray.200'}
-            borderRadius={'md'}
-          >
-            {children}
+                  return (
+                    <Button
+                      key={part}
+                      size={'sm'}
+                      variant={'ghost'}
+                      as={Link}
+                      href={href}
+                      colorScheme={pathParts.length === index + 1 ? 'blue' : 'gray'}
+                    >
+                      {getPathTitle(part)}
+                    </Button>
+                  );
+                })}
+              </HStack>
+            </Box>
+            <Box
+              m={4}
+              p={4}
+              bgColor={'white'}
+              border={'solid 1px'}
+              borderColor={'gray.200'}
+              borderRadius={'md'}
+            >
+              {children}
+            </Box>
           </Box>
         </Box>
-      </Box>
-    </ChakraProvider>
+      </ChakraProvider>
+    </QueryClientProvider>
   );
 };
 

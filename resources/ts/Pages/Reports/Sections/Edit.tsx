@@ -1,0 +1,118 @@
+import {
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
+  VStack,
+  Text,
+  HStack,
+  RadioGroup,
+  Radio,
+} from '@calvient/decal';
+import Layout from '../../../Components/Layout.tsx';
+import {useForm} from '@inertiajs/react';
+import {Report} from '../../../Types/Report.ts';
+import {Series} from '../../../Types/Series.ts';
+import {MdBarChart, MdLineAxis, MdPieChart, MdTableView} from 'react-icons/md';
+import React from 'react';
+import BoxSelect from '../../../Components/BoxSelect.tsx';
+import AddFilters from './Components/AddFilters.tsx';
+import {Section} from '../../../Types/Section.ts';
+
+interface Props {
+  section: Section;
+  report: Report;
+  series: Series;
+}
+
+const Create = ({series, section, report}: Props) => {
+  const {data, setData, put, processing, errors} = useForm<Section>(section);
+
+  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    put(`/arbol/reports/${report.id}/sections/${section.id}`);
+  };
+
+  return (
+    <form onSubmit={submit}>
+      <VStack spacing={8}>
+        <FormControl isRequired>
+          <FormLabel>Section Type</FormLabel>
+          <BoxSelect
+            value={data.format}
+            options={[
+              {label: 'Table', icon: MdTableView, value: 'table'},
+              {label: 'Line Graph', icon: MdLineAxis, value: 'line'},
+              {label: 'Bar Chart', icon: MdBarChart, value: 'bar'},
+              {label: 'Pie Chart', icon: MdPieChart, value: 'pie'},
+            ]}
+            onSelect={(format) => setData('format', format)}
+          />
+          {errors.format && (
+            <Text color={'red'} fontSize={'sm'} mt={2}>
+              {errors.format}
+            </Text>
+          )}
+        </FormControl>
+
+        <FormControl isRequired>
+          <FormLabel>Section Name</FormLabel>
+          <Input value={data.name} onChange={(e) => setData('name', e.target.value)} />
+          {errors.name && (
+            <Text color={'red'} fontSize={'sm'} mt={2}>
+              {errors.name}
+            </Text>
+          )}
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>Section Description</FormLabel>
+          <Textarea
+            value={data.description ?? ''}
+            onChange={(e) => setData('description', e.target.value)}
+          />
+          {errors.description && (
+            <Text color={'red'} fontSize={'sm'} mt={2}>
+              {errors.description}
+            </Text>
+          )}
+        </FormControl>
+
+        {data.series.length > 0 && series && (
+          <HStack w={'full'} alignItems={'flex-start'}>
+            {Object.keys(series.filters).length > 0 && (
+              <AddFilters
+                allFilters={series.filters}
+                selectedFilters={data.filters}
+                onFiltersChange={(filters) => setData('filters', filters)}
+              />
+            )}
+
+            {series.slices.length > 0 && (
+              <FormControl flex={1}>
+                <FormLabel>Sub-divide the data by:</FormLabel>
+                <RadioGroup onChange={(value) => setData('slice', value)} value={data.slice}>
+                  <VStack w={'full'}>
+                    {series.slices.map((slice) => (
+                      <Radio w={'full'} key={slice} value={slice}>
+                        {slice}
+                      </Radio>
+                    ))}
+                  </VStack>
+                </RadioGroup>
+              </FormControl>
+            )}
+          </HStack>
+        )}
+        <Button type={'submit'} isLoading={processing} colorScheme={'blue'}>
+          Update Section
+        </Button>
+      </VStack>
+    </form>
+  );
+};
+
+Create.layout = (page: React.ReactElement) => <Layout children={page} />;
+
+export default Create;

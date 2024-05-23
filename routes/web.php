@@ -10,5 +10,5 @@ Route::middleware(['auth', 'web', HandleInertiaRequests::class])->prefix('/arbol
         ->only(['index', 'show', 'create', 'store']);
 
     Route::resource('reports.sections', SectionsController::class)
-        ->only(['create', 'store']);
+        ->only(['create', 'store', 'edit', 'update', 'destroy']);
 });

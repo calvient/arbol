@@ -15,7 +15,7 @@ class ArbolServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasAssets()
-            ->hasRoutes(['web'])
+            ->hasRoutes(['web', 'api'])
             ->hasMigration('create_arbol_reports_table')
             ->hasMigration('create_arbol_sections_table')
             ->hasCommand(MakeArbolSeries::class);

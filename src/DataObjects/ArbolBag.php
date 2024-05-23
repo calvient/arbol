@@ -55,7 +55,7 @@ class ArbolBag
             $query->where(function ($query) use ($field, $filters, $callback) {
                 foreach ($filters as $filter => $func) {
                     if ($this->isFilterSet($field, $filter)) {
-                        $callback($query, $func);
+                        $callback($func);
                     }
                 }
             });

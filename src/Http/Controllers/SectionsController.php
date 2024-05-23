@@ -50,6 +50,51 @@ class SectionsController extends Controller
         return redirect()->route('arbol.reports.show', $report);
     }
 
+    public function edit(ArbolReport $report, ArbolSection $section)
+    {
+        $this->validateReportAccess($report);
+
+        return Inertia::render('Reports/Sections/Edit', [
+            'report' => $report,
+            'section' => $section,
+            'series' => $this->arbolService->getSeriesByName($section->series),
+        ]);
+    }
+
+    public function update(ArbolReport $report, ArbolSection $section)
+    {
+        $this->validateReportAccess($report);
+
+        request()->validate([
+            'name' => 'required|string|min:3|max:255',
+            'description' => 'nullable',
+            'series' => 'required|string',
+            'slice' => 'nullable|string',
+            'filters' => 'nullable|array',
+            'format' => 'required|string',
+        ]);
+
+        $section->update([
+            'name' => request('name'),
+            'description' => request('description'),
+            'series' => request('series'),
+            'slice' => request('slice'),
+            'filters' => request('filters'),
+            'format' => request('format'),
+        ]);
+
+        return redirect()->route('arbol.reports.show', $report);
+    }
+
+    public function destroy(ArbolReport $report, ArbolSection $section)
+    {
+        $this->validateReportAccess($report);
+
+        $section->delete();
+
+        return redirect()->route('arbol.reports.show', $report);
+    }
+
     private function validateReportAccess(ArbolReport $report): void
     {
         abort_if($report->author_id !== auth()->id() && ! in_array(auth()->id(), $report->user_ids), 403);

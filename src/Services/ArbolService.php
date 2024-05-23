@@ -19,6 +19,7 @@ class ArbolService
         foreach ($classes as $class) {
             $seriesInstance = new $class();
             $series[] = [
+                'class' => $class,
                 'name' => $seriesInstance->name(),
                 'description' => $seriesInstance->description(),
                 'slices' => array_keys($seriesInstance->slices()),
@@ -29,6 +30,32 @@ class ArbolService
         }
 
         return $series;
+    }
+
+    public function getSeriesByName(string $name): ?array
+    {
+        $allSeries = $this->getSeries();
+
+        foreach ($allSeries as $series) {
+            if ($series['name'] === $name) {
+                return $series;
+            }
+        }
+
+        return null;
+    }
+
+    public function getSeriesClassByName(string $name)
+    {
+        $classes = $this->getSeriesClasses();
+        foreach ($classes as $class) {
+            $seriesInstance = new $class();
+            if ($seriesInstance->name() === $name) {
+                return $class;
+            }
+        }
+
+        return null;
     }
 
     /**

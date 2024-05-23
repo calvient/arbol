@@ -4,6 +4,7 @@ import React from 'react';
 import {User} from '../../Types/User.ts';
 import {Report} from '../../Types/Report.ts';
 import {AddIcon, Box, Center, HStack, Heading, Spacer, Tag, Text, VStack} from '@calvient/decal';
+import ReportSection from './Sections/Components/ReportSection.tsx';
 
 interface ShowProps {
   report: Report;
@@ -25,6 +26,10 @@ const Show = ({report}: ShowProps) => {
 
       <Box mt={8}>
         <VStack spacing={4}>
+          {report.sections.map((section) => (
+            <ReportSection key={section.id} section={section} report={report} />
+          ))}
+
           <Center
             as={Link}
             href={`/arbol/reports/${report.id}/sections/create`}

@@ -11,6 +11,7 @@
   "devDependencies": {
     "@calvient/decal": "^0.0.3",
     "@inertiajs/react": "^1.0.16",
+    "@tanstack/react-table": "^8.17.3",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
@@ -22,6 +23,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.2.1",
+    "react-query": "^3.23.2",
+    "recharts": "^2.12.7",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vite-tsconfig-paths": "^3.5.0"
