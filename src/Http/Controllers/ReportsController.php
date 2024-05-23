@@ -48,6 +48,41 @@ class ReportsController extends Controller
         return redirect()->route('arbol.reports.index');
     }
 
+    public function edit(ArbolReport $report)
+    {
+        $this->validateReportAccess($report);
+
+        return Inertia::render('Reports/Edit', [
+            'report' => $report,
+        ]);
+    }
+
+    public function update(ArbolReport $report)
+    {
+        $this->validateReportAccess($report);
+
+        request()->validate([
+            'name' => 'required|string|min:3|max:255',
+            'description' => 'nullable',
+        ]);
+
+        $report->update([
+            'name' => request('name'),
+            'description' => request('description'),
+        ]);
+
+        return redirect()->route('arbol.reports.show', $report);
+    }
+
+    public function destroy(ArbolReport $report)
+    {
+        $this->validateReportAccess($report);
+
+        $report->delete();
+
+        return redirect()->route('arbol.reports.index');
+    }
+
     private function validateReportAccess(ArbolReport $report): void
     {
         abort_if($report->author_id !== auth()->id() && ! in_array(auth()->id(), $report->user_ids), 403);

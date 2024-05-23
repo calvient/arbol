@@ -4,10 +4,13 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
+  PaginationState,
   useReactTable,
 } from '@tanstack/react-table';
 import {inferColumnNames} from '../../../../../Utils/inferColumnNames.ts';
+import Paginator from '../../../../../Components/Paginator.tsx';
 
 type Row = Record<string, string | number | null>;
 
@@ -16,6 +19,10 @@ interface TableFormatProps {
 }
 
 const TableFormat = ({data}: TableFormatProps) => {
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
   const [currentSlice, setCurrentSlice] = useState<string>(Object.keys(data)[0]);
   const slices = Object.keys(data);
 
@@ -39,6 +46,11 @@ const TableFormat = ({data}: TableFormatProps) => {
     data: rows,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
+    state: {
+      pagination,
+    },
   });
 
   return (
@@ -106,6 +118,11 @@ const TableFormat = ({data}: TableFormatProps) => {
             })}
           </Tbody>
         </Table>
+        <Paginator
+          currentPage={pagination.pageIndex + 1}
+          totalPages={table.getPageCount()}
+          onChange={(page) => table.setPageIndex(page - 1)}
+        />
       </Box>
     </Box>
   );

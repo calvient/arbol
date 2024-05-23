@@ -34,6 +34,7 @@ const Create = ({report, series}: Props) => {
     slice: '',
     filters: [],
     format: 'table',
+    sequence: 0,
   });
 
   const selectedSeries = series.find((s) => s.name === data.series);

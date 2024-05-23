@@ -11,7 +11,7 @@ import {
   Radio,
 } from '@calvient/decal';
 import Layout from '../../../Components/Layout.tsx';
-import {useForm} from '@inertiajs/react';
+import {router, useForm} from '@inertiajs/react';
 import {Report} from '../../../Types/Report.ts';
 import {Series} from '../../../Types/Series.ts';
 import {MdBarChart, MdLineAxis, MdPieChart, MdTableView} from 'react-icons/md';
@@ -19,6 +19,7 @@ import React from 'react';
 import BoxSelect from '../../../Components/BoxSelect.tsx';
 import AddFilters from './Components/AddFilters.tsx';
 import {Section} from '../../../Types/Section.ts';
+import ConfirmableBtn from '../../../Components/ConfirmableBtn.tsx';
 
 interface Props {
   section: Section;
@@ -26,7 +27,7 @@ interface Props {
   series: Series;
 }
 
-const Create = ({series, section, report}: Props) => {
+const Edit = ({series, section, report}: Props) => {
   const {data, setData, put, processing, errors} = useForm<Section>(section);
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -79,6 +80,21 @@ const Create = ({series, section, report}: Props) => {
           )}
         </FormControl>
 
+        <FormControl>
+          <FormLabel>Section Sequence</FormLabel>
+          <Input
+            type={'number'}
+            min={0}
+            value={data.sequence ?? ''}
+            onChange={(e) => setData('sequence', Number(e.target.value))}
+          />
+          {errors.description && (
+            <Text color={'red'} fontSize={'sm'} mt={2}>
+              {errors.description}
+            </Text>
+          )}
+        </FormControl>
+
         {data.series.length > 0 && series && (
           <HStack w={'full'} alignItems={'flex-start'}>
             {Object.keys(series.filters).length > 0 && (
@@ -105,14 +121,23 @@ const Create = ({series, section, report}: Props) => {
             )}
           </HStack>
         )}
-        <Button type={'submit'} isLoading={processing} colorScheme={'blue'}>
-          Update Section
-        </Button>
+        <HStack w={'full'} justifyContent={'space-between'}>
+          <ConfirmableBtn
+            variant={'ghost'}
+            colorScheme={'red'}
+            onConfirm={() => router.delete(`/arbol/reports/${report.id}/sections/${section.id}`)}
+          >
+            Delete
+          </ConfirmableBtn>
+          <Button type={'submit'} isLoading={processing} colorScheme={'blue'}>
+            Update Section
+          </Button>
+        </HStack>
       </VStack>
     </form>
   );
 };
 
-Create.layout = (page: React.ReactElement) => <Layout children={page} />;
+Edit.layout = (page: React.ReactElement) => <Layout children={page} />;
 
-export default Create;
+export default Edit;

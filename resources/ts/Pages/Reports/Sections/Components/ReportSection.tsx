@@ -6,6 +6,8 @@ import TableFormat from './Formats/TableFormat.tsx';
 import PieFormat from './Formats/PieFormat.tsx';
 import {Link} from '@inertiajs/react';
 import {Report} from '../../../../Types/Report.ts';
+import LineFormat from './Formats/LineFormat.tsx';
+import BarFormat from './Formats/BarFormat.tsx';
 
 interface ReportSectionProps {
   report: Report;
@@ -53,14 +55,16 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         <Button
           as={Link}
           href={`/arbol/reports/${report.id}/sections/${section.id}/edit`}
-          size={'sm'}
+          size={'xs'}
         >
-          Edit
+          Edit Section
         </Button>
       </HStack>
 
       {section.format === 'table' && <TableFormat data={data} />}
       {section.format === 'pie' && <PieFormat data={data} />}
+      {section.format === 'line' && <LineFormat data={data} />}
+      {section.format === 'bar' && <BarFormat data={data} />}
     </Box>
   );
 };

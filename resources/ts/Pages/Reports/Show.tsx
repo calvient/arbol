@@ -3,7 +3,7 @@ import {Head, Link} from '@inertiajs/react';
 import React from 'react';
 import {User} from '../../Types/User.ts';
 import {Report} from '../../Types/Report.ts';
-import {AddIcon, Box, Center, HStack, Heading, Spacer, Tag, Text, VStack} from '@calvient/decal';
+import {AddIcon, Box, Center, HStack, Heading, Spacer, Text, VStack, Button} from '@calvient/decal';
 import ReportSection from './Sections/Components/ReportSection.tsx';
 
 interface ShowProps {
@@ -18,7 +18,9 @@ const Show = ({report}: ShowProps) => {
       <HStack w={'full'} spacing={4}>
         <Heading size={'md'}>{report.name}</Heading>
         <Spacer />
-        <Tag size={'sm'}>Created: {report.created_at}</Tag>
+        <Button as={Link} href={`/arbol/reports/${report.id}/edit`} size={'xs'}>
+          Edit Report
+        </Button>
       </HStack>
       <Box mt={4}>
         <Text fontSize={'sm'}>{report.description}</Text>

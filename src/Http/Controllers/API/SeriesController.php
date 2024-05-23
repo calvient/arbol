@@ -39,7 +39,7 @@ class SeriesController extends Controller
 
         return match (request('format')) {
             'table' => $this->formatForTable($data),
-            'pie' => $this->formatForPie($data),
+            'pie', 'line', 'bar' => $this->formatForChart($data),
             default => response()->json(['error' => 'Invalid format'], 400),
         };
     }
@@ -94,7 +94,7 @@ class SeriesController extends Controller
         return response()->json($data);
     }
 
-    private function formatForPie(array $data): JsonResponse
+    private function formatForChart(array $data): JsonResponse
     {
         $formattedData = collect($data)
             ->map(fn ($value, $key) => [

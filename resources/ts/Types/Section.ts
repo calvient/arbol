@@ -8,4 +8,5 @@ export type Section = {
   slice: string;
   filters: Array<{field: string; value: string}>;
   format: string;
+  sequence: number;
 };

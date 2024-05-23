@@ -72,6 +72,7 @@ class SectionsController extends Controller
             'slice' => 'nullable|string',
             'filters' => 'nullable|array',
             'format' => 'required|string',
+            'sequence' => 'nullable|numeric|min:0',
         ]);
 
         $section->update([
@@ -81,6 +82,7 @@ class SectionsController extends Controller
             'slice' => request('slice'),
             'filters' => request('filters'),
             'format' => request('format'),
+            'sequence' => request('sequence'),
         ]);
 
         return redirect()->route('arbol.reports.show', $report);
