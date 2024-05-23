@@ -38,42 +38,34 @@ class MakeArbolSeries extends Command
 
         class $className implements IArbolSeries
         {
-            static public function name(): string
+            public function name(): string
             {
                 // This is the name that will be displayed in the Arbol UI
                 return '$name';
             }
 
-            static public function description(): string
+            public function description(): string
             {
                 // This is the description that will be displayed in the Arbol UI
                 return '';
             }
 
-            static public function data(): array
+            public function data(): array
             {
                 // This should return an array of data that will be used in the series.
                 return [];
             }
 
-            static public function slices(): array
+            public function slices(): array
             {
                 // This should return an array of functions that could be used to slice the data.
                 return [];
             }
 
-            static public function filters(): array
+            public function filters(): array
             {
                 // This should return an array of functions that could be used to filter the data.
                 return [];
-            }
-
-            static public function formats(): array
-            {
-                // This should return an array of ways the data can be displayed.
-                return [
-                    'table',
-                ];
             }
         }
         PHP;
