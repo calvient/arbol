@@ -39,7 +39,7 @@ const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFilters
   };
 
   return (
-    <FormControl flex={1}>
+    <FormControl flex={2}>
       <FormLabel>Filters:</FormLabel>
 
       <Wrap>

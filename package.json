@@ -10,6 +10,7 @@
   "dependencies": {},
   "devDependencies": {
     "@calvient/decal": "^0.0.5",
+    "@choc-ui/chakra-autocomplete": "^5.4.1",
     "@inertiajs/react": "^1.0.16",
     "@tanstack/react-table": "^8.17.3",
     "@types/react": "^18.2.66",

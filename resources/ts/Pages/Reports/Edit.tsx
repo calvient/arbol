@@ -12,17 +12,23 @@ import Layout from '../../Components/Layout.tsx';
 import {router, useForm} from '@inertiajs/react';
 import {Report} from '../../Types/Report.ts';
 import ConfirmableBtn from '../../Components/ConfirmableBtn.tsx';
+import AutoComplete from '../../Components/AutoComplete.tsx';
 
 interface Props {
   report: Report;
+  allUsers: {id: number; name: string}[];
 }
 
-const Edit = ({report}: Props) => {
+const Edit = ({report, allUsers}: Props) => {
   const {data, setData, put, processing, errors} = useForm(report);
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     put(`/arbol/reports/${report.id}`);
+  }
+
+  function castToNumber(data: unknown[]) {
+    return data.map((d) => parseInt(d as string));
   }
 
   return (
@@ -49,6 +55,20 @@ const Edit = ({report}: Props) => {
               {errors.description}
             </Text>
           )}
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>User Access</FormLabel>
+          <AutoComplete
+            values={data.user_ids as number[]}
+            options={allUsers.map((u) => ({
+              label: u.name,
+              value: u.id,
+            }))}
+            onChange={(values) => {
+              setData('user_ids', castToNumber(values));
+            }}
+          />
         </FormControl>
 
         <HStack w={'full'} justifyContent={'space-between'}>

@@ -47,9 +47,6 @@ A slice is a way to group data. You might want to view "Podcast Streams" by stat
 ## Filters
 A filter is set of filters applied to your data that you define. For example, a user may only care to see "Podcast Streams" for the last week.
 
-## Formats
-A format is a pre-defined way a piece of data can be viewed. It might be as a table or a graph.
-
 # Quick Start
 ## Install the package
 `composer require calvient/arbol`
@@ -58,19 +55,35 @@ A format is a pre-defined way a piece of data can be viewed. It might be as a ta
 `php artisan vendor:publish --provider="Calvient\Arbol\ArbolServiceProvider" --tag="arbol-config"`
 `php artisan migrate`
 
+## Make configurations
+We assume your User model is `App\Models\User`. If not, you can override it in the arbol.php config file.
+
+Because Arbol can assign reports to users, you may also want to further limit which users Arbol can see. You can add a scope like the following to User.php.
+
+```php
+public function scopeArbol($query)
+{
+    return $query->where('is_admin', true);
+}
+```
+
 ## Create a New Series
 `php artisan make:arbol-series PodcastStreams`
 
 ## Add Data and Configuration
 Example:
+
 ```php
 <?php
 
 namespace App\Arbol\Series;
 
+use Calvient\Arbol\DataObjects\ArbolBag;
+
 class PodcastStreams {
-  public function data()
+  public function data(ArbolBag $arbolBag)
   {
+    // You should apply the filters here, which are in the variable $arbolBag.
     return PodcastStream::all();
   }
 
@@ -89,15 +102,6 @@ class PodcastStreams {
         '< 15 minutes' => fn($row) => $row['listen_length'] < 15,
         '>= 15 minutes' => fn($row) => $row['listen_length'] >= 15,
       ]
-    ];
-  }
-
-  public function formats()
-  {
-    return [
-      'table',
-      'pie-chart',
-      'line-graph'
     ];
   }
 }

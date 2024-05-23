@@ -26,8 +26,6 @@ const Paginator = ({currentPage, totalPages, onChange, size = 'md'}: PaginatorPr
     }
   }, [currentPage, totalPages]);
 
-  console.log('PaginatorProps:', {currentPage, totalPages, onChange, size});
-
   return (
     <HStack w='full' justifyContent='space-between' p={4}>
       <Button size={size} onClick={() => onChange(currentPage - 1)} isDisabled={isFirstPage}>

@@ -54,6 +54,7 @@ class ReportsController extends Controller
 
         return Inertia::render('Reports/Edit', [
             'report' => $report,
+            'allUsers' => $this->getArbolUsers(),
         ]);
     }
 
@@ -64,11 +65,13 @@ class ReportsController extends Controller
         request()->validate([
             'name' => 'required|string|min:3|max:255',
             'description' => 'nullable',
+            'users' => 'nullable|array',
         ]);
 
         $report->update([
             'name' => request('name'),
             'description' => request('description'),
+            'user_ids' => request('user_ids', [$report->author_id]),
         ]);
 
         return redirect()->route('arbol.reports.show', $report);
@@ -86,5 +89,18 @@ class ReportsController extends Controller
     private function validateReportAccess(ArbolReport $report): void
     {
         abort_if($report->author_id !== auth()->id() && ! in_array(auth()->id(), $report->user_ids), 403);
+    }
+
+    private function getArbolUsers()
+    {
+        $userModelClass = config('arbol.user_model');
+        $query = $userModelClass::query();
+
+        // Check if the arbol scope exists and apply it if it does
+        if (method_exists($userModelClass, 'scopeArbol')) {
+            $query = $userModelClass::arbol();
+        }
+
+        return $query->get(['id', 'name']);
     }
 }

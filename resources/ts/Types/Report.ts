@@ -9,4 +9,5 @@ export type Report = {
   sections: Section[];
   created_at: string;
   updated_at: string;
+  user_ids?: number[];
 };
