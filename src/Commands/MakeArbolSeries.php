@@ -35,6 +35,7 @@ class MakeArbolSeries extends Command
         namespace App\Arbol;
 
         use Calvient\Arbol\Contracts\IArbolSeries;
+        use Calvient\Arbol\DataObjects\ArbolBag;
 
         class $className implements IArbolSeries
         {
@@ -50,9 +51,9 @@ class MakeArbolSeries extends Command
                 return '';
             }
 
-            public function data(): array
+            public function data(ArbolBag \$arbolBag): array
             {
-                // This should return an array of data that will be used in the series.
+                // This should return an array of data that will be used in the series.$
                 return [];
             }
 
