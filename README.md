@@ -58,7 +58,7 @@ A filter is set of filters applied to your data that you define. For example, a 
 ## Publish the package assets after each update
 Add the following to composer.json under the "scripts" -> "post-update-cmd" key:
 ```bash
-@php artisan arbol:publish
+@php artisan vendor:publish --tag=arbol-assets --ansi --force
 ```
 
 ## Make configurations

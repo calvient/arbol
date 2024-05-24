@@ -1,8 +1,8 @@
 {
-  "resources/ts/main.tsx": {
-    "file": "assets/app-lplM4QN9.js",
+  "resources/ts/app.tsx": {
+    "file": "app.js",
     "name": "app",
-    "src": "resources/ts/main.tsx",
+    "src": "resources/ts/app.tsx",
     "isEntry": true
   }
 }
