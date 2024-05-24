@@ -52,8 +52,14 @@ A filter is set of filters applied to your data that you define. For example, a 
 `composer require calvient/arbol`
 
 ## Publish the package assets and run migrations
-`php artisan vendor:publish --provider="Calvient\Arbol\ArbolServiceProvider" --tag="arbol-config"`
+`php artisan vendor:publish --provider='Calvient\Arbol\ArbolServiceProvider'`
 `php artisan migrate`
+
+## Publish the package assets after each update
+Add the following to composer.json under the "scripts" -> "post-update-cmd" key:
+```bash
+@php artisan arbol:publish
+```
 
 ## Make configurations
 We assume your User model is `App\Models\User`. If not, you can override it in the arbol.php config file.

@@ -1,5 +1,5 @@
 import {FC, ReactNode} from 'react';
-import {Box, Button, ChakraProvider, HStack, theme} from '@calvient/decal';
+import {Box, Button, Center, ChakraProvider, HStack, theme, Text} from '@calvient/decal';
 import {Link} from '@inertiajs/react';
 import {QueryClient, QueryClientProvider} from 'react-query';
 
@@ -74,6 +74,18 @@ const Layout: FC<LayoutProps> = ({children}) => {
             >
               {children}
             </Box>
+          </Box>
+          <Box
+            m={4}
+            p={4}
+            bgColor={'white'}
+            border={'solid 1px'}
+            borderColor={'gray.200'}
+            borderRadius={'md'}
+          >
+            <Center>
+              <Text fontSize={'sm'}>Version 0.0.4</Text>
+            </Center>
           </Box>
         </Box>
       </ChakraProvider>
