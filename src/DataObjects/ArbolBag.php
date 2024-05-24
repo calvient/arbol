@@ -48,17 +48,19 @@ class ArbolBag
         }
     }
 
-    public function applyQueryFilters(Builder $query, array $allFilters, callable $callback): void
+    public function applyQueryFilters(Builder $query, array $allFilters): Builder
     {
         foreach ($allFilters as $field => $filters) {
             // This allows the use of OR filters
-            $query->where(function ($query) use ($field, $filters, $callback) {
+            $query->where(function ($q) use ($field, $filters) {
                 foreach ($filters as $filter => $func) {
                     if ($this->isFilterSet($field, $filter)) {
-                        $callback($func);
+                        $func($q);
                     }
                 }
             });
         }
+
+        return $query;
     }
 }
