@@ -1,5 +1,5 @@
 import {Section} from '../../../../Types/Section.ts';
-import {Box, Button, HStack, Heading, Progress, Spacer, Text} from '@calvient/decal';
+import {Box, Button, HStack, Heading, Spacer, Text} from '@calvient/decal';
 import {useQuery} from 'react-query';
 import {toQueryString} from '../../../../Utils/toQueryString.ts';
 import TableFormat from './Formats/TableFormat.tsx';
@@ -35,7 +35,11 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
   });
 
   if (isLoading || !data) {
-    return <Progress size='xs' isIndeterminate />;
+    return (
+      <Box w={'full'} p={4} border={'solid 1px'} borderColor={'gray.200'} borderRadius={'md'}>
+        <Text>Loading data...</Text>
+      </Box>
+    );
   }
 
   return (
