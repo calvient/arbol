@@ -84,7 +84,7 @@ const Layout: FC<LayoutProps> = ({children}) => {
             borderRadius={'md'}
           >
             <Center>
-              <Text fontSize={'sm'}>Version 0.0.5</Text>
+              <Text fontSize={'sm'}>Version 0.0.6</Text>
             </Center>
           </Box>
         </Box>

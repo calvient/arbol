@@ -85,6 +85,8 @@ class SectionsController extends Controller
             'sequence' => request('sequence'),
         ]);
 
+        $this->arbolService->clearCacheForSection($section);
+
         return redirect()->route('arbol.reports.show', $report);
     }
 

@@ -3,6 +3,8 @@
 namespace Calvient\Arbol\Services;
 
 use Calvient\Arbol\Contracts\IArbolSeries;
+use Calvient\Arbol\Models\ArbolSection;
+use Illuminate\Support\Facades\Cache;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RecursiveRegexIterator;
@@ -56,6 +58,46 @@ class ArbolService
         }
 
         return null;
+    }
+
+    public function storeDataInCache(ArbolSection $arbolSection, mixed $data): void
+    {
+        Cache::put("arbol:section:{$arbolSection->id}", json_encode($data), now()->addDays(14));
+    }
+
+    public function getDataFromCache(ArbolSection $arbolSection): mixed
+    {
+        $data = Cache::get("arbol:section:{$arbolSection->id}");
+
+        return $data ? json_decode($data, true) : null;
+    }
+
+    public function setIsRunning(ArbolSection $arbolSection, bool $flag)
+    {
+        Cache::put("arbol:section:{$arbolSection->id}:is_running", $flag, now()->addMinutes(30));
+    }
+
+    public function getIsRunning(ArbolSection $arbolSection): bool
+    {
+        return Cache::get("arbol:section:{$arbolSection->id}:is_running") ?? false;
+    }
+
+    public function setLastRunDuration(ArbolSection $arbolSection, int $duration): void
+    {
+        Cache::put("arbol:section:{$arbolSection->id}:last_run_duration", $duration, now()->addDays(14));
+    }
+
+    public function getLastRunDuration(ArbolSection $arbolSection): ?int
+    {
+        return Cache::get("arbol:section:{$arbolSection->id}:last_run_duration");
+    }
+
+    public function clearCacheForSection(ArbolSection $arbolSection): void
+    {
+        Cache::forget("arbol:section:{$arbolSection->id}");
+        Cache::forget("arbol:section:{$arbolSection->id}:last_kicked_off");
+        Cache::forget("arbol:section:{$arbolSection->id}:is_running");
+        Cache::forget("arbol:section:{$arbolSection->id}:last_run_duration");
     }
 
     /**

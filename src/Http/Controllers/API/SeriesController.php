@@ -2,7 +2,8 @@
 
 namespace Calvient\Arbol\Http\Controllers\API;
 
-use Calvient\Arbol\DataObjects\ArbolBag;
+use Calvient\Arbol\Jobs\LoadSectionData;
+use Calvient\Arbol\Models\ArbolSection;
 use Calvient\Arbol\Services\ArbolService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
@@ -18,12 +19,14 @@ class SeriesController extends Controller
     {
         // Validate the request inputs
         $validator = Validator::make(request()->all(), [
+            'section_id' => 'required|integer',
             'series' => 'required|string',
             'slice' => 'nullable|string',
             'filters' => 'nullable|array',
             'filters.*.field' => 'required|string',
             'filters.*.value' => 'required|string',
             'format' => 'required|string',
+            'force_refresh' => 'nullable|boolean',
         ]);
 
         // Return validation errors if validation fails
@@ -31,62 +34,46 @@ class SeriesController extends Controller
             return response()->json(['error' => $validator->errors()], 400);
         }
 
-        $data = $this->getRawData(
-            request('series'),
-            request('filters', []),
-            request('slice')
+        // Get the section from the database
+        $section = ArbolSection::findOrFail(request('section_id'));
+
+        // Clear the cache if the force_refresh parameter is set
+        if (request('force_refresh')) {
+            $this->arbolService->clearCacheForSection($section);
+        }
+
+        // Get the cached data
+        $data = $this->arbolService->getDataFromCache(
+            arbolSection: $section
         );
 
-        return match (request('format')) {
-            'table' => $this->formatForTable($data),
-            'pie', 'line', 'bar' => $this->formatForChart($data),
-            default => response()->json(['error' => 'Invalid format'], 400),
-        };
-    }
-
-    protected function getRawData(string $series, array $filters, ?string $slice): ?array
-    {
-        // Retrieve the series class by name
-        $seriesClass = $this->arbolService->getSeriesClassByName($series);
-        if (! $seriesClass) {
-            return null;
+        // Return the data if it exists
+        if ($data) {
+            return match (request('format')) {
+                'table' => $this->formatForTable($data),
+                'pie', 'line', 'bar' => $this->formatForChart($data),
+                default => response()->json(['error' => 'Invalid format'], 400),
+            };
         }
 
-        // Create instance and ArbolBag with filters and slice
-        $seriesInstance = new $seriesClass();
-        $arbolBag = $this->createArbolBag($filters, $slice);
-
-        // Get data and apply slice
-        $data = collect($seriesInstance->data($arbolBag));
-        $data = $slice ? $this->applySlice($data, $seriesInstance, $slice) : $data->groupBy(fn () => 'All');
-
-        return $data->toArray();
-    }
-
-    protected function createArbolBag(array $filters, ?string $slice): ArbolBag
-    {
-        $arbolBag = new ArbolBag();
-
-        // Add filters to ArbolBag
-        collect($filters)->each(fn ($filter) => $arbolBag->addFilter($filter['field'], $filter['value']));
-
-        // Add slice to ArbolBag if it exists
-        if ($slice) {
-            $arbolBag->addSlice($slice);
+        if (! $this->isCurrentlyRunning() || request('force_refresh')) {
+            LoadSectionData::dispatch(
+                arbolSection: $section,
+                series: request('series'),
+                filters: request('filters', []),
+                slice: request('slice')
+            );
         }
 
-        return $arbolBag;
-    }
-
-    protected function applySlice($data, $seriesInstance, $slice): \Illuminate\Support\Collection
-    {
-        foreach ($seriesInstance->slices() as $name => $callback) {
-            if ($name === $slice) {
-                return $data->groupBy(fn ($item) => $callback($item));
-            }
-        }
-
-        return $data;
+        return response()->json(
+            [
+                'message' => 'We are currently processing your request. Please try again in a few seconds.',
+                'estimated_time' => $this->arbolService->getLastRunDuration(
+                    arbolSection: $section,
+                ) ?? 60,
+            ],
+            202,
+        );
     }
 
     private function formatForTable(array $data): JsonResponse
@@ -105,5 +92,12 @@ class SeriesController extends Controller
             ->toArray();
 
         return response()->json($formattedData);
+    }
+
+    private function isCurrentlyRunning(): bool
+    {
+        return $this->arbolService->getIsRunning(
+            arbolSection: ArbolSection::findOrFail(request('section_id')),
+        );
     }
 }
