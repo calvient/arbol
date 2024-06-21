@@ -46,9 +46,6 @@ class LoadSectionData implements ShouldQueue
         // Start the timer
         $start = microtime(true);
 
-        // Remove this artificial delay
-        sleep(5);
-
         // Create instance and ArbolBag with filters and slice
         $seriesInstance = new $seriesClass();
         $arbolBag = $this->createArbolBag();

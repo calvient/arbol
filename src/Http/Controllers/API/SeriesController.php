@@ -22,6 +22,7 @@ class SeriesController extends Controller
             'section_id' => 'required|integer',
             'series' => 'required|string',
             'slice' => 'nullable|string',
+            'xaxis_slice' => 'nullable|string',
             'filters' => 'nullable|array',
             'filters.*.field' => 'required|string',
             'filters.*.value' => 'required|string',
@@ -51,7 +52,8 @@ class SeriesController extends Controller
         if ($data) {
             return match (request('format')) {
                 'table' => $this->formatForTable($data),
-                'pie', 'line', 'bar' => $this->formatForChart($data),
+                'line', 'bar' => $this->formatForChart($data, request('slice')),
+                'pie' => $this->formatForPie($data),
                 default => response()->json(['error' => 'Invalid format'], 400),
             };
         }
@@ -61,7 +63,8 @@ class SeriesController extends Controller
                 arbolSection: $section,
                 series: request('series'),
                 filters: request('filters', []),
-                slice: request('slice')
+                // xaxis_slice is used for line and bar charts
+                slice: request('xaxis_slice') ?? request('slice'),
             );
         }
 
@@ -81,7 +84,36 @@ class SeriesController extends Controller
         return response()->json($data);
     }
 
-    private function formatForChart(array $data): JsonResponse
+    private function formatForChart(array $data, string $slice = ''): JsonResponse
+    {
+        $formattedData = collect($data)
+            ->map(function ($rows, $key) use ($slice) {
+                if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null') {
+                    return [
+                        'name' => $key,
+                        'value' => count($rows),
+                    ];
+                }
+
+                $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
+                $series = new $seriesInfo['class']();
+
+                // Get the count for each slice key
+                $totals = collect($rows)
+                    ->groupBy($series->slices()[$slice] ?? fn () => 'All')
+                    ->map(fn ($rows) => count($rows))
+                    ->toArray();
+                $totals['name'] = $key;
+
+                return $totals;
+            })
+            ->values()
+            ->toArray();
+
+        return response()->json($formattedData);
+    }
+
+    private function formatForPie(array $data): JsonResponse
     {
         $formattedData = collect($data)
             ->map(fn ($value, $key) => [
