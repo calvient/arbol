@@ -67,6 +67,7 @@ class SeriesController extends Controller
                 slice: request('format') === 'line' || request('format') === 'bar'
                                 ? request('xaxis_slice')
                                 : request('slice'),
+                user: auth()->user(),
             );
         }
 

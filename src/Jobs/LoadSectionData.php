@@ -17,7 +17,7 @@ class LoadSectionData implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public ArbolSection $arbolSection, public string $series, public array $filters, public ?string $slice)
+    public function __construct(public ArbolSection $arbolSection, public string $series, public array $filters, public ?string $slice, public $user = null)
     {
     }
 
@@ -51,7 +51,7 @@ class LoadSectionData implements ShouldQueue
         $arbolBag = $this->createArbolBag();
 
         // Get data and apply slice
-        $data = collect($seriesInstance->data($arbolBag));
+        $data = collect($seriesInstance->data($arbolBag, $this->user));
         $data = $this->slice ? $this->applySlice($data, $seriesInstance) : $data->groupBy(fn () => 'All');
 
         // Store data in cache

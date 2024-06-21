@@ -10,7 +10,7 @@ interface IArbolSeries
 
     public function description(): string;
 
-    public function data(ArbolBag $arbolBag): array;
+    public function data(ArbolBag $arbolBag, $user = null): array;
 
     public function slices(): array;
 
