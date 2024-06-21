@@ -6,6 +6,7 @@ export type Section = {
   updated_at?: string;
   series: string;
   slice: string;
+  xaxis_slice?: string;
   filters: Array<{field: string; value: string}>;
   format: string;
   sequence: number;

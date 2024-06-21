@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "bmewburn.vscode-intelephense-client",
+    "open-southeners.laravel-pint",
+    "sanderronde.phpstan-vscode",
+    "amiralizadeh9480.laravel-extra-intellisense",
+    "codingyu.laravel-goto-view",
+    "calebporzio.better-phpunit",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "onecentlin.laravel-blade",
+    "shufo.vscode-blade-formatter"
+  ]
+}

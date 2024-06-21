@@ -29,6 +29,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         section_id: section.id,
         series: section.series,
         slice: section.slice,
+        xaxis_slice: section.xaxis_slice,
         filters: section.filters,
         format: section.format,
         force_refresh: forceRefresh ? 1 : 0,
