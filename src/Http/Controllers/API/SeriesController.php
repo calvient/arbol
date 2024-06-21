@@ -88,19 +88,20 @@ class SeriesController extends Controller
     {
         $formattedData = collect($data)
             ->map(function ($rows, $key) use ($slice) {
-                if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null') {
+                $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
+                $series = new $seriesInfo['class']();
+                $slices = $series->slices();
+
+                if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null' || ! isset($slices[$slice])) {
                     return [
                         'name' => $key,
                         'value' => count($rows),
                     ];
                 }
 
-                $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
-                $series = new $seriesInfo['class']();
-
                 // Get the count for each slice key
                 $totals = collect($rows)
-                    ->groupBy($series->slices()[$slice] ?? fn () => 'All')
+                    ->groupBy($slices[$slice] ?? fn () => 'All')
                     ->map(fn ($rows) => count($rows))
                     ->toArray();
                 $totals['name'] = $key;
