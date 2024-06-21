@@ -64,7 +64,9 @@ class SeriesController extends Controller
                 series: request('series'),
                 filters: request('filters', []),
                 // xaxis_slice is used for line and bar charts
-                slice: request('xaxis_slice') ?? request('slice'),
+                slice: request('format') === 'line' || request('format') === 'bar'
+                                ? request('xaxis_slice')
+                                : request('slice'),
             );
         }
 
@@ -98,6 +100,12 @@ class SeriesController extends Controller
                         'value' => count($rows),
                     ];
                 }
+
+                logger()->info('slices', [
+                    'slices' => $slices,
+                    'slice' => $slice,
+                    'rows' => $rows,
+                ]);
 
                 // Get the count for each slice key
                 $totals = collect($rows)
