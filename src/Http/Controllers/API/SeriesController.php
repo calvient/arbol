@@ -101,15 +101,11 @@ class SeriesController extends Controller
                     ];
                 }
 
-                logger()->info('slices', [
-                    'slices' => $slices,
-                    'slice' => $slice,
-                    'rows' => $rows,
-                ]);
+                $isArray = is_array($rows[0] ?? null);
 
                 // Get the count for each slice key
-                $totals = collect($rows)
-                    ->groupBy($slices[$slice] ?? fn () => 'All')
+                $totals = collect($isArray ? $rows : [$rows])
+                    ->groupBy($slices[$slice])
                     ->map(fn ($rows) => count($rows))
                     ->toArray();
                 $totals['name'] = $key;
