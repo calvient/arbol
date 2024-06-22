@@ -70,7 +70,14 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         {estimatedTime - timeElapsed > 0 && (
           <Text>Estimated time remaining: {estimatedTime - timeElapsed} second(s)</Text>
         )}
-        {estimatedTime - timeElapsed < 0 && <Text>This is taking longer than expected...</Text>}
+        {estimatedTime - timeElapsed < 0 && (
+          <>
+            <Text>This is taking longer than expected...</Text>
+            <Button mt={4} size={'xs'} colorScheme={'red'} onClick={() => loadData(true)}>
+              Force Refresh
+            </Button>
+          </>
+        )}
       </Box>
     );
   }
