@@ -15,4 +15,6 @@ interface IArbolSeries
     public function slices(): array;
 
     public function filters(): array;
+
+    public function aggregators(): array;
 }

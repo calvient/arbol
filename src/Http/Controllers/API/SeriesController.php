@@ -23,6 +23,7 @@ class SeriesController extends Controller
             'series' => 'required|string',
             'slice' => 'nullable|string',
             'xaxis_slice' => 'nullable|string',
+            'aggregator' => 'nullable|string',
             'filters' => 'nullable|array',
             'filters.*.field' => 'required|string',
             'filters.*.value' => 'required|string',
@@ -50,12 +51,14 @@ class SeriesController extends Controller
 
         // Return the data if it exists
         if ($data) {
-            return match (request('format')) {
+            $formattedData = match (request('format')) {
                 'table' => $this->formatForTable($data),
-                'line', 'bar' => $this->formatForChart($data, request('slice')),
+                'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator')),
                 'pie' => $this->formatForPie($data),
-                default => response()->json(['error' => 'Invalid format'], 400),
+                default => abort(400, 'Invalid format parameter'),
             };
+
+            return response()->json($formattedData);
         }
 
         if (! $this->isCurrentlyRunning() || request('force_refresh')) {
@@ -82,23 +85,63 @@ class SeriesController extends Controller
         );
     }
 
-    private function formatForTable(array $data): JsonResponse
+    public function downloadData()
     {
-        return response()->json($data);
+        // Validate the request inputs
+        $validator = Validator::make(request()->all(), [
+            'section_id' => 'required|integer',
+            'series' => 'required|string',
+            'slice' => 'nullable|string',
+            'xaxis_slice' => 'nullable|string',
+            'aggregator' => 'nullable|string',
+            'format' => 'required|string',
+        ]);
+
+        // Return validation errors if validation fails
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        // Get the section from the database
+        $section = ArbolSection::findOrFail(request('section_id'));
+
+        // Get the cached data
+        $data = $this->arbolService->getDataFromCache(
+            arbolSection: $section
+        );
+        if (! $data) {
+            abort(404, 'Data not found');
+        }
+
+        $formattedData = match (request('format')) {
+            'table' => $this->formatForTable($data),
+            'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator')),
+            'pie' => $this->formatForPie($data),
+            default => abort(400, 'Invalid format parameter'),
+        };
+
+        return $this->downloadCsv($formattedData);
     }
 
-    private function formatForChart(array $data, string $slice = ''): JsonResponse
+    private function formatForTable(array $data): array
+    {
+        return $data;
+    }
+
+    private function formatForChart(array $data, string $slice = '', string $aggregator = 'Default'): array
     {
         $formattedData = collect($data)
-            ->map(function ($rows, $key) use ($slice) {
+            ->map(function ($rows, $key) use ($slice, $aggregator) {
                 $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
                 $series = new $seriesInfo['class']();
                 $slices = $series->slices();
+                $aggregators = $series->aggregators();
+                $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];
 
                 if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null' || ! isset($slices[$slice])) {
                     return [
                         'name' => $key,
-                        'value' => count($rows),
+                        'value' => $aggregatorFn($rows),
                     ];
                 }
 
@@ -116,12 +159,12 @@ class SeriesController extends Controller
             ->values()
             ->toArray();
 
-        return response()->json($formattedData);
+        return $formattedData;
     }
 
-    private function formatForPie(array $data): JsonResponse
+    private function formatForPie(array $data): array
     {
-        $formattedData = collect($data)
+        return collect($data)
             ->map(fn ($value, $key) => [
                 'name' => $key,
                 'value' => count($value),
@@ -129,7 +172,6 @@ class SeriesController extends Controller
             ->values()
             ->toArray();
 
-        return response()->json($formattedData);
     }
 
     private function isCurrentlyRunning(): bool
@@ -137,5 +179,61 @@ class SeriesController extends Controller
         return $this->arbolService->getIsRunning(
             arbolSection: ArbolSection::findOrFail(request('section_id')),
         );
+    }
+
+    private function downloadCsv(array $data)
+    {
+        $data = $this->flattenArray($data);
+
+        // Output to a csv and return it as a download
+        $csv = fopen('php://temp', 'r+');
+
+        // Write the column headers
+        $columnHeaders = [];
+        foreach ($data as $row) {
+            foreach ($row as $key => $value) {
+                if (! in_array($key, $columnHeaders)) {
+                    $columnHeaders[] = $key;
+                }
+            }
+        }
+
+        fputcsv($csv, $columnHeaders);
+
+        // Write the data to the csv
+        foreach ($data as $row) {
+            $rowData = [];
+            foreach ($columnHeaders as $header) {
+                $rowData[] = $row[$header] ?? '';
+            }
+            fputcsv($csv, $rowData);
+        }
+
+        // Rewind the file pointer, in order to read the file
+        rewind($csv);
+
+        // Return the csv as a download
+        return response()->streamDownload(function () use ($csv) {
+            fpassthru($csv);
+        }, 'data.csv');
+    }
+
+    private function flattenArray(array $data)
+    {
+        // We need the data to be flat for the CSV
+        // If the rows are under keys like ['key' => $rows] then we need to flatten them
+        // and make the key a column on the row
+        $flattenedData = [];
+        foreach ($data as $key => $rows) {
+            if (is_array($rows[0] ?? null)) {
+                foreach ($rows as $row) {
+                    $flattenedData[] = array_merge(['key' => $key], $row);
+                }
+            } else {
+                $flattenedData[] = $rows;
+            }
+        }
+
+        return $flattenedData;
     }
 }

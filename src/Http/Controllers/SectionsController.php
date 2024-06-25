@@ -34,6 +34,7 @@ class SectionsController extends Controller
             'series' => 'required|string',
             'slice' => 'nullable|string',
             'xaxis_slice' => 'nullable|string',
+            'aggregator' => 'nullable|string',
             'filters' => 'nullable|array',
             'format' => 'required|string',
         ]);
@@ -45,6 +46,7 @@ class SectionsController extends Controller
             'series' => request('series'),
             'slice' => request('slice'),
             'xaxis_slice' => request('xaxis_slice'),
+            'aggregator' => request('aggregator'),
             'filters' => request('filters'),
             'format' => request('format'),
         ]);
@@ -73,6 +75,7 @@ class SectionsController extends Controller
             'series' => 'required|string',
             'slice' => 'nullable|string',
             'xaxis_slice' => 'nullable|string',
+            'aggregator' => 'nullable|string',
             'filters' => 'nullable|array',
             'format' => 'required|string',
             'sequence' => 'nullable|numeric|min:0',
@@ -84,6 +87,7 @@ class SectionsController extends Controller
             'series' => request('series'),
             'slice' => request('slice'),
             'xaxis_slice' => request('xaxis_slice'),
+            'aggregator' => request('aggregator'),
             'filters' => request('filters'),
             'format' => request('format'),
             'sequence' => request('sequence'),
@@ -105,6 +109,6 @@ class SectionsController extends Controller
 
     private function validateReportAccess(ArbolReport $report): void
     {
-        abort_if($report->author_id !== auth()->id() && !in_array(auth()->id(), $report->user_ids), 403);
+        abort_if($report->author_id !== auth()->id() && ! in_array(auth()->id(), $report->user_ids), 403);
     }
 }

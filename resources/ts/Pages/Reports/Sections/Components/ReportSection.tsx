@@ -1,5 +1,5 @@
 import {Section} from '../../../../Types/Section.ts';
-import {Box, Button, HStack, Heading, Spacer, Text} from '@calvient/decal';
+import {Box, Button, HStack, Heading, Spacer, Text, Link as ChakraLink} from '@calvient/decal';
 import {toQueryString} from '../../../../Utils/toQueryString.ts';
 import TableFormat from './Formats/TableFormat.tsx';
 import PieFormat from './Formats/PieFormat.tsx';
@@ -30,6 +30,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         series: section.series,
         slice: section.slice,
         xaxis_slice: section.xaxis_slice,
+        aggregator: section.aggregator,
         filters: section.filters,
         format: section.format,
         force_refresh: forceRefresh ? 1 : 0,
@@ -98,6 +99,22 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         <Spacer />
         <Button size={'xs'} colorScheme={'blue'} onClick={() => loadData(true)}>
           Refresh
+        </Button>
+        <Button
+          target='_blank'
+          as={ChakraLink}
+          href={`/arbol/series-data/download?${toQueryString({
+            section_id: section.id,
+            series: section.series,
+            slice: section.slice,
+            xaxis_slice: section.xaxis_slice,
+            aggregator: section.aggregator,
+            filters: section.filters,
+            format: section.format,
+          })}`}
+          size={'xs'}
+        >
+          Download
         </Button>
         <Button
           as={Link}

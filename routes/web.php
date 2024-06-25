@@ -1,5 +1,6 @@
 <?php
 
+use Calvient\Arbol\Http\Controllers\API\SeriesController;
 use Calvient\Arbol\Http\Controllers\ReportsController;
 use Calvient\Arbol\Http\Controllers\SectionsController;
 use Calvient\Arbol\Http\Middleware\HandleInertiaRequests;
@@ -27,4 +28,7 @@ Route::middleware(['auth', 'web', HandleInertiaRequests::class])->prefix('/arbol
     Route::get('/reports/{report}/sections/{section}', function (ArbolReport $report, ArbolSection $section) {
         return redirect()->route('arbol.reports.sections.edit', [$report, $section]);
     });
+
+    // Download series data
+    Route::get('/series-data/download', [SeriesController::class, 'downloadData']);
 });

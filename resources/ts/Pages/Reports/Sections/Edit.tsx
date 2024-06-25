@@ -108,21 +108,38 @@ const Edit = ({series, section, report}: Props) => {
             {series.slices.length > 0 && (
               <>
                 {['line', 'bar'].includes(data.format) && (
-                  <FormControl flex={1}>
-                    <FormLabel>Show on x-axis:</FormLabel>
-                    <RadioGroup
-                      onChange={(value) => setData('xaxis_slice', value)}
-                      value={data.xaxis_slice}
-                    >
-                      <VStack w={'full'}>
-                        {series.slices.map((slice) => (
-                          <Radio w={'full'} key={slice} value={slice}>
-                            {slice}
-                          </Radio>
-                        ))}
-                      </VStack>
-                    </RadioGroup>
-                  </FormControl>
+                  <>
+                    <FormControl flex={1}>
+                      <FormLabel>Aggregator:</FormLabel>
+                      <RadioGroup
+                        onChange={(value) => setData('aggregator', value)}
+                        value={data.aggregator}
+                      >
+                        <VStack w={'full'}>
+                          {series.aggregators.map((aggregator) => (
+                            <Radio w={'full'} key={aggregator} value={aggregator}>
+                              {aggregator}
+                            </Radio>
+                          ))}
+                        </VStack>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormControl flex={1}>
+                      <FormLabel>Show on x-axis:</FormLabel>
+                      <RadioGroup
+                        onChange={(value) => setData('xaxis_slice', value)}
+                        value={data.xaxis_slice}
+                      >
+                        <VStack w={'full'}>
+                          {series.slices.map((slice) => (
+                            <Radio w={'full'} key={slice} value={slice}>
+                              {slice}
+                            </Radio>
+                          ))}
+                        </VStack>
+                      </RadioGroup>
+                    </FormControl>
+                  </>
                 )}
                 <FormControl flex={1}>
                   <FormLabel>Sub-divide the data by:</FormLabel>

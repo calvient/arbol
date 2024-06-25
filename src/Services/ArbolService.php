@@ -28,6 +28,7 @@ class ArbolService
                 'filters' => collect($seriesInstance->filters())->mapWithKeys(function ($filters, $key) {
                     return [$key => array_keys($filters)];
                 })->toArray(),
+                'aggregators' => array_keys($seriesInstance->aggregators()),
             ];
         }
 

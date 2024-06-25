@@ -7,6 +7,7 @@ export type Section = {
   series: string;
   slice: string;
   xaxis_slice?: string;
+  aggregator?: string;
   filters: Array<{field: string; value: string}>;
   format: string;
   sequence: number;

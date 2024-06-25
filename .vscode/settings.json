@@ -1,5 +1,6 @@
 {
   // Editor Settings
+  "editor.multiCursorModifier": "alt",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnPaste": true,
   "editor.formatOnSave": true,

@@ -39,6 +39,8 @@ class MakeArbolSeries extends Command
 
         class $className implements IArbolSeries
         {
+            public ?User \$user = null;
+
             public function name(): string
             {
                 // This is the name that will be displayed in the Arbol UI
@@ -51,7 +53,7 @@ class MakeArbolSeries extends Command
                 return '';
             }
 
-            public function data(ArbolBag \$arbolBag): array
+            public function data(ArbolBag \$arbolBag, \$user = null): array
             {
                 // This should return an array of data that will be used in the series.$
                 return [];
@@ -65,8 +67,18 @@ class MakeArbolSeries extends Command
 
             public function filters(): array
             {
-                // This should return an array of functions that could be used to filter the data.
+                // This should return a 2 dimensional array of filters that could be used to filter the data.
+                // e.g. [['question' => ['option1 => fn(), 'option2' => fn()...]]
                 return [];
+            }
+
+            public function aggregators(): array;
+            {
+                // This should return a single value that represents the data.
+                // It may often just be the count of rows. But you can also sum, average, etc.
+                return [
+                   'Default' => fn(\$rows) => count(\$rows),
+                ];
             }
         }
         PHP;
