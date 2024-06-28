@@ -17,6 +17,10 @@ class LoadSectionData implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 1;
+
+    public $maxExceptions = 1;
+
     public function __construct(public ArbolSection $arbolSection, public string $series, public array $filters, public ?string $slice, public $user = null)
     {
     }
