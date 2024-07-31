@@ -145,7 +145,7 @@ class SeriesController extends Controller
                 if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null' || ! isset($slices[$slice])) {
                     return [
                         'name' => $key,
-                        'value' => $aggregatorFn($rows),
+                        'value' => round($aggregatorFn($rows), 2),
                     ];
                 }
 
@@ -154,7 +154,7 @@ class SeriesController extends Controller
                 // Get the count for each slice key
                 $totals = collect($isArray ? $rows : [$rows])
                     ->groupBy($slices[$slice])
-                    ->map(fn ($rows) => count($rows))
+                    ->map(fn ($rows) => round($aggregatorFn($rows), 2))
                     ->toArray();
                 $totals['name'] = $key;
 
