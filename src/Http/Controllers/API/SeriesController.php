@@ -50,7 +50,11 @@ class SeriesController extends Controller
         );
 
         // Return the data if it exists
-        if ($data) {
+        if (!is_null($data)) {
+            if(empty($data)){
+                $data = ['No data found' => []];
+            }
+
             $formattedData = match (request('format')) {
                 'table' => $this->formatForTable($data),
                 'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator')),
