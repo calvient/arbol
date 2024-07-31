@@ -153,6 +153,8 @@ class SeriesController extends Controller
 
                 // Get the count for each slice key
                 $totals = collect($isArray ? $rows : [$rows])
+                    // Filter out empty rows
+                    ->filter(fn ($row) => count($row) > 0)
                     ->groupBy($slices[$slice])
                     ->map(fn ($rows) => round($aggregatorFn($rows), 2))
                     ->toArray();
