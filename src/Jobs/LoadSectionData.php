@@ -60,21 +60,29 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
         // Get data and apply slice
         logger()->info("Getting data for section {$this->arbolSection->name}");
-        $data = collect($seriesInstance->data($arbolBag, $this->user));
-        $data = $this->slice ? $this->applySlice($data, $seriesInstance) : $data->groupBy(fn () => 'All');
+        try {
+            $data = collect($seriesInstance->data($arbolBag, $this->user));
+            $data = $this->slice ? $this->applySlice($data, $seriesInstance) : $data->groupBy(fn () => 'All');
+        } catch (\Exception $e) {
+            $arbolService->setIsRunning($this->arbolSection, false);
+            logger()->error('ARBOL ERROR: '.$e->getMessage());
+
+            return;
+        } finally {
+            // End the timer
+            $end = microtime(true);
+            $seconds = $end - $start;
+            logger()->info("Data for section {$this->arbolSection->name} loaded in {$seconds} seconds");
+        }
+
         logger()->info("Data for section {$this->arbolSection->name} loaded");
 
         // Store data in cache
         $arbolService->storeDataInCache($this->arbolSection, $data);
         logger()->info("Data for section {$this->arbolSection->name} stored");
 
-        // End the timer
-        $end = microtime(true);
-        $seconds = $end - $start;
-        logger()->info("Data for section {$this->arbolSection->name} loaded in {$seconds} seconds");
-
         // Store the run time in cache in seconds
-        $arbolService->setLastRunDuration($this->arbolSection, $end - $start);
+        $arbolService->setLastRunDuration($this->arbolSection, $seconds);
 
         // Set the semaphore to indicate that the job is no longer running
         $arbolService->setIsRunning($this->arbolSection, false);
