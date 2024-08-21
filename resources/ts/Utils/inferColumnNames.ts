@@ -1,5 +1,5 @@
 export function inferColumnNames(
-  data: Record<string, Record<string, string | number | null>[]>
+  data: Record<string, Record<string, string | number | null>[]>,
 ): string[] {
   const columns = new Set<string>();
   for (const slice in data) {

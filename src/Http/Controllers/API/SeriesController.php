@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Validator;
 
 class SeriesController extends Controller
 {
-    public function __construct(public ArbolService $arbolService)
-    {
-    }
+    public function __construct(public ArbolService $arbolService) {}
 
     public function getSeriesData(): JsonResponse
     {
@@ -50,8 +48,8 @@ class SeriesController extends Controller
         );
 
         // Return the data if it exists
-        if (!is_null($data)) {
-            if(empty($data)){
+        if (! is_null($data)) {
+            if (empty($data)) {
                 $data = ['No data found' => []];
             }
 
@@ -72,8 +70,8 @@ class SeriesController extends Controller
                 filters: request('filters', []),
                 // xaxis_slice is used for line and bar charts
                 slice: request('format') === 'line' || request('format') === 'bar'
-                                ? request('xaxis_slice')
-                                : request('slice'),
+                    ? request('xaxis_slice')
+                    : request('slice'),
                 user: auth()->user(),
             );
         }
@@ -83,7 +81,7 @@ class SeriesController extends Controller
                 'message' => 'We are currently processing your request. Please try again in a few seconds.',
                 'estimated_time' => $this->arbolService->getLastRunDuration(
                     arbolSection: $section,
-                ) ?? 60,
+                ) ?? 120,
             ],
             202,
         );
@@ -137,7 +135,7 @@ class SeriesController extends Controller
         $formattedData = collect($data)
             ->map(function ($rows, $key) use ($slice, $aggregator) {
                 $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
-                $series = new $seriesInfo['class']();
+                $series = new $seriesInfo['class'];
                 $slices = $series->slices();
                 $aggregators = $series->aggregators();
                 $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];

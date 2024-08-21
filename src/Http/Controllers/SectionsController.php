@@ -10,9 +10,7 @@ use Inertia\Inertia;
 
 class SectionsController extends Controller
 {
-    public function __construct(public ArbolService $arbolService)
-    {
-    }
+    public function __construct(public ArbolService $arbolService) {}
 
     public function create(ArbolReport $report)
     {

@@ -19,7 +19,7 @@ class ArbolService
         $series = [];
 
         foreach ($classes as $class) {
-            $seriesInstance = new $class();
+            $seriesInstance = new $class;
             $series[] = [
                 'class' => $class,
                 'name' => $seriesInstance->name(),
@@ -52,7 +52,7 @@ class ArbolService
     {
         $classes = $this->getSeriesClasses();
         foreach ($classes as $class) {
-            $seriesInstance = new $class();
+            $seriesInstance = new $class;
             if ($seriesInstance->name() === $name) {
                 return $class;
             }

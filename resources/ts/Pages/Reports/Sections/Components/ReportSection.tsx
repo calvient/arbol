@@ -40,7 +40,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-      }
+      },
     );
 
     if (response.status === 200) {
@@ -62,23 +62,36 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading || !data) {
     return (
       <Box w={'full'} p={4} border={'solid 1px'} borderColor={'gray.200'} borderRadius={'md'}>
-        <Text>Loading data...</Text>
-        {estimatedTime - timeElapsed > 0 && (
-          <Text>Estimated time remaining: {estimatedTime - timeElapsed} second(s)</Text>
-        )}
-        {estimatedTime - timeElapsed < 0 && (
-          <>
-            <Text>This is taking longer than expected...</Text>
-            <Button mt={4} size={'xs'} colorScheme={'red'} onClick={() => loadData(true)}>
-              Force Refresh
-            </Button>
-          </>
-        )}
+        <HStack spacing={2} w={'full'} justifyContent={'space-between'}>
+          <Box>
+            <Text>Loading data...</Text>
+            {estimatedTime - timeElapsed > 0 && (
+              <Text>Estimated time remaining: {estimatedTime - timeElapsed} second(s)</Text>
+            )}
+            {estimatedTime - timeElapsed < 0 && (
+              <>
+                <Text>This is taking longer than expected...</Text>
+                <Button mt={4} size={'xs'} colorScheme={'red'} onClick={() => loadData(true)}>
+                  Force Refresh
+                </Button>
+              </>
+            )}
+          </Box>
+          <Spacer />
+          <Button
+            as={Link}
+            href={`/arbol/reports/${report.id}/sections/${section.id}/edit`}
+            size={'xs'}
+          >
+            Edit Section
+          </Button>
+        </HStack>
       </Box>
     );
   }

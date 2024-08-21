@@ -7,13 +7,14 @@ use Calvient\Arbol\Models\ArbolSection;
 use Calvient\Arbol\Services\ArbolService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 
-class LoadSectionData implements ShouldQueue
+class LoadSectionData implements ShouldBeUnique, ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -21,9 +22,9 @@ class LoadSectionData implements ShouldQueue
 
     public $maxExceptions = 1;
 
-    public function __construct(public ArbolSection $arbolSection, public string $series, public array $filters, public ?string $slice, public $user = null)
-    {
-    }
+    public $timeout = 180;
+
+    public function __construct(public ArbolSection $arbolSection, public string $series, public array $filters, public ?string $slice, public $user = null) {}
 
     public function handle(ArbolService $arbolService): void
     {
@@ -33,6 +34,7 @@ class LoadSectionData implements ShouldQueue
             $this->loadData($arbolService);
         } catch (\Exception $e) {
             $arbolService->setIsRunning($this->arbolSection, false);
+            logger()->error($e->getMessage());
 
             // Let the exception bubble up so that the job can be retried
             throw $e;
@@ -41,6 +43,8 @@ class LoadSectionData implements ShouldQueue
 
     public function loadData(ArbolService $arbolService)
     {
+        logger()->info("Starting to load data for section {$this->arbolSection->name}");
+
         // Retrieve the series class by name
         $seriesClass = $arbolService->getSeriesClassByName($this->series);
         if (! $seriesClass) {
@@ -51,18 +55,23 @@ class LoadSectionData implements ShouldQueue
         $start = microtime(true);
 
         // Create instance and ArbolBag with filters and slice
-        $seriesInstance = new $seriesClass();
+        $seriesInstance = new $seriesClass;
         $arbolBag = $this->createArbolBag();
 
         // Get data and apply slice
+        logger()->info("Getting data for section {$this->arbolSection->name}");
         $data = collect($seriesInstance->data($arbolBag, $this->user));
         $data = $this->slice ? $this->applySlice($data, $seriesInstance) : $data->groupBy(fn () => 'All');
+        logger()->info("Data for section {$this->arbolSection->name} loaded");
 
         // Store data in cache
         $arbolService->storeDataInCache($this->arbolSection, $data);
+        logger()->info("Data for section {$this->arbolSection->name} stored");
 
         // End the timer
         $end = microtime(true);
+        $seconds = $end - $start;
+        logger()->info("Data for section {$this->arbolSection->name} loaded in {$seconds} seconds");
 
         // Store the run time in cache in seconds
         $arbolService->setLastRunDuration($this->arbolSection, $end - $start);
@@ -73,7 +82,7 @@ class LoadSectionData implements ShouldQueue
 
     protected function createArbolBag(): ArbolBag
     {
-        $arbolBag = new ArbolBag();
+        $arbolBag = new ArbolBag;
 
         // Add filters to ArbolBag
         collect($this->filters)->each(fn ($filter) => $arbolBag->addFilter($filter['field'], $filter['value']));

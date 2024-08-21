@@ -33,7 +33,7 @@ const TableFormat = ({data}: TableFormatProps) => {
       header: columnName,
       cell: ({row}) =>
         columnName in (row.original as Row) ? (row.original as Row)[columnName] : null,
-    })
+    }),
   );
 
   const rows = React.useMemo(() => {
@@ -84,8 +84,8 @@ const TableFormat = ({data}: TableFormatProps) => {
                               ? header.column.getNextSortingOrder() === 'asc'
                                 ? 'Sort ascending'
                                 : header.column.getNextSortingOrder() === 'desc'
-                                ? 'Sort descending'
-                                : 'Clear sort'
+                                  ? 'Sort descending'
+                                  : 'Clear sort'
                               : undefined
                           }
                         >

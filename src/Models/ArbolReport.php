@@ -16,8 +16,7 @@ class ArbolReport extends Model
 
     public function sections()
     {
-        return $this->hasMany(ArbolSection::class)
-            ->orderBy('sequence');
+        return $this->hasMany(ArbolSection::class);
     }
 
     public function author()

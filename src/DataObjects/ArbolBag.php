@@ -9,8 +9,7 @@ class ArbolBag
     public function __construct(
         public array $filters = [],
         public ?string $slice = null
-    ) {
-    }
+    ) {}
 
     public function addFilter(string $field, string $filter)
     {

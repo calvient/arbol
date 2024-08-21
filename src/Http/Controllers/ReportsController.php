@@ -21,7 +21,12 @@ class ReportsController extends Controller
         $this->validateReportAccess($report);
 
         return Inertia::render('Reports/Show', [
-            'report' => $report->load(['author:id,name', 'sections']),
+            'report' => $report->load([
+                'author:id,name',
+                'sections' => function ($query) {
+                    $query->orderBy('sequence');
+                },
+            ]),
             'users' => $report->users()->pluck('name', 'id')->toArray(),
         ]);
     }

@@ -25,7 +25,12 @@ const LineFormat = ({data}: LineGraphFormatProps) => {
           {keys.length > 1 && <Legend />}
           <CartesianGrid strokeDasharray='3 3' />
           <XAxis dataKey='name' />
-          <YAxis />
+          <YAxis
+            domain={[
+              (dataMin: number) => Math.floor(dataMin),
+              (dataMax: number) => Math.ceil(dataMax),
+            ]}
+          />
           <Tooltip />
           {keys.map((key) => (
             <Line
