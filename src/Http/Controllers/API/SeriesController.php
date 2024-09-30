@@ -81,7 +81,7 @@ class SeriesController extends Controller
                 'message' => 'We are currently processing your request. Please try again in a few seconds.',
                 'estimated_time' => $this->arbolService->getLastRunDuration(
                     arbolSection: $section,
-                ) ?? 120,
+                ) ?? 300,
             ],
             202,
         );
