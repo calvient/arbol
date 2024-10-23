@@ -37,6 +37,7 @@ class ArbolReport extends Model
     public function scopeMine($query)
     {
         return $query->where('author_id', auth()->id())
-            ->orWhereJsonContains('user_ids', auth()->id());
+            ->orWhereJsonContains('user_ids', auth()->id())
+            ->orWhereJsonContains('user_ids', -1);
     }
 }

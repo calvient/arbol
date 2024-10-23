@@ -93,7 +93,10 @@ class ReportsController extends Controller
 
     private function validateReportAccess(ArbolReport $report): void
     {
-        abort_if($report->author_id !== auth()->id() && ! in_array(auth()->id(), $report->user_ids), 403);
+        abort_if($report->author_id !== auth()->id()
+            && ! in_array(auth()->id(), $report->user_ids)
+            && ! in_array(-1, $report->user_ids),
+            403);
     }
 
     private function getArbolUsers()

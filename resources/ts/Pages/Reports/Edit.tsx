@@ -31,6 +31,16 @@ const Edit = ({report, allUsers}: Props) => {
     return data.map((d) => parseInt(d as string));
   }
 
+  const userOptions = allUsers.map((u) => ({
+    label: u.name,
+    value: u.id,
+  }));
+
+  userOptions.push({
+    label: 'Everyone',
+    value: -1,
+  });
+
   return (
     <form onSubmit={submit}>
       <VStack spacing={4}>
@@ -61,10 +71,7 @@ const Edit = ({report, allUsers}: Props) => {
           <FormLabel>User Access</FormLabel>
           <AutoComplete
             values={data.user_ids as number[]}
-            options={allUsers.map((u) => ({
-              label: u.name,
-              value: u.id,
-            }))}
+            options={userOptions}
             onChange={(values) => {
               setData('user_ids', castToNumber(values));
             }}

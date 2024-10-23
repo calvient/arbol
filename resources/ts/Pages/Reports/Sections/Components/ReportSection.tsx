@@ -50,7 +50,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
     } else if (response.status === 202) {
       const data = await response.json();
       setEstimatedTime(data.estimated_time);
-      setTimeout(loadData, 5000);
+      setTimeout(loadData, 10000);
     }
   };
 
