@@ -113,4 +113,9 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
         return $data;
     }
+
+    public function uniqueId(): string
+    {
+        return (string) $this->arbolSection->id;
+    }
 }
