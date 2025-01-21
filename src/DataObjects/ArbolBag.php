@@ -47,7 +47,7 @@ class ArbolBag
         }
     }
 
-    public function applyQueryFilters(Builder $query, array $allFilters): Builder
+    public function applyQueryFilters(Builder|\Illuminate\Database\Query\Builder $query, array $allFilters): Builder|\Illuminate\Database\Query\Builder
     {
         foreach ($allFilters as $field => $filters) {
             // This allows the use of OR filters
