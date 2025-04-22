@@ -168,14 +168,31 @@ class SeriesController extends Controller
 
     private function formatForPie(array $data): array
     {
+        $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
+        $series = new $seriesInfo['class'];
+        $aggregators = $series->aggregators();
+        $aggregator = request('aggregator', 'Default');
+
+        // If no aggregator is defined or 'Default' is not in the aggregators list, fall back to counting rows
+        if (! isset($aggregators[$aggregator]) && ! isset($aggregators['Default'])) {
+            return collect($data)
+                ->map(fn ($value, $key) => [
+                    'name' => $key,
+                    'value' => count($value),
+                ])
+                ->values()
+                ->toArray();
+        }
+
+        $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];
+
         return collect($data)
             ->map(fn ($value, $key) => [
                 'name' => $key,
-                'value' => count($value),
+                'value' => round($aggregatorFn($value), 2),
             ])
             ->values()
             ->toArray();
-
     }
 
     private function isCurrentlyRunning(): bool
