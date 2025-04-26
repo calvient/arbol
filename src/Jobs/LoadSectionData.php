@@ -22,7 +22,7 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
     public $maxExceptions = 1;
 
-    public $timeout = 300;
+    public $timeout = 600;
 
     public function __construct(public ArbolSection $arbolSection, public string $series, public array $filters, public ?string $slice, public $user = null) {}
 
