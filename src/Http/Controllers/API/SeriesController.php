@@ -187,10 +187,14 @@ class SeriesController extends Controller
         $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];
 
         return collect($data)
-            ->map(fn ($value, $key) => [
-                'name' => $key,
-                'value' => round($aggregatorFn($value), 2),
-            ])
+            ->map(function ($value, $key) use ($aggregatorFn) {
+                $aggregatedValue = $aggregatorFn($value);
+
+                return [
+                    'name' => $key,
+                    'value' => is_string($aggregatedValue) ? $aggregatedValue : round($aggregatedValue, 2),
+                ];
+            })
             ->values()
             ->toArray();
     }
