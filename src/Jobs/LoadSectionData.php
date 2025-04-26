@@ -119,6 +119,9 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
     public function uniqueId(): string
     {
-        return (string) $this->arbolSection->id;
+        // Round current timestamp down to nearest 5 minutes for id uniqueness
+        $timestamp = intdiv(now()->timestamp, 300) * 300;
+
+        return "{$this->arbolSection->id}_{$timestamp}";
     }
 }
