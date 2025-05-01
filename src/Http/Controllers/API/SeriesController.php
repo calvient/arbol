@@ -189,12 +189,13 @@ class SeriesController extends Controller
         return collect($data)
             ->map(function ($value, $key) use ($aggregatorFn) {
                 $aggregatedValue = $aggregatorFn($value);
+                $aggregatedValue = is_string($aggregatedValue)
+                    ? (float) $aggregatedValue
+                    : $aggregatedValue;
 
                 return [
                     'name' => $key,
-                    'value' => is_string($aggregatedValue)
-                        ? $aggregatedValue
-                        : number_format(round($aggregatedValue, 2), 2, '.', ','),
+                    'value' => number_format(round($aggregatedValue, 2), 2, '.', ','),
                 ];
             })
             ->values()
