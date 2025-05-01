@@ -143,7 +143,7 @@ class SeriesController extends Controller
                 if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null' || ! isset($slices[$slice])) {
                     return [
                         'name' => $key,
-                        'value' => round($aggregatorFn($rows), 2),
+                        'value' => number_format(round($aggregatorFn($rows), 2), 2, '.', ','),
                     ];
                 }
 
@@ -154,7 +154,7 @@ class SeriesController extends Controller
                     // Filter out empty rows
                     ->filter(fn ($row) => count($row) > 0)
                     ->groupBy($slices[$slice])
-                    ->map(fn ($rows) => round($aggregatorFn($rows), 2))
+                    ->map(fn ($rows) => number_format(round($aggregatorFn($rows), 2), 2, '.', ','))
                     ->toArray();
                 $totals['name'] = $key;
 
@@ -192,7 +192,9 @@ class SeriesController extends Controller
 
                 return [
                     'name' => $key,
-                    'value' => is_string($aggregatedValue) ? $aggregatedValue : round($aggregatedValue, 2),
+                    'value' => is_string($aggregatedValue)
+                        ? $aggregatedValue
+                        : number_format(round($aggregatedValue, 2), 2, '.', ','),
                 ];
             })
             ->values()

@@ -72,7 +72,7 @@ class MakeArbolSeries extends Command
                 return [];
             }
 
-            public function aggregators(): array;
+            public function aggregators(): array
             {
                 // This should return a single value that represents the data.
                 // It may often just be the count of rows. But you can also sum, average, etc.
