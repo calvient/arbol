@@ -15,6 +15,10 @@ const renderCustomLabel = (props: any) => {
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   const percentage = (percent * 100).toFixed(0);
+  const formattedValue =
+    typeof value === 'number' && isFinite(value)
+      ? value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+      : value;
 
   return (
     <text
@@ -25,7 +29,7 @@ const renderCustomLabel = (props: any) => {
       dominantBaseline='central'
       fontSize={14}
     >
-      {`${name} - ${value} (${percentage}%)`}
+      {`${name} - ${formattedValue} (${percentage}%)`}
     </text>
   );
 };

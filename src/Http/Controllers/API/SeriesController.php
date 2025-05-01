@@ -232,7 +232,11 @@ class SeriesController extends Controller
         foreach ($data as $row) {
             $rowData = [];
             foreach ($columnHeaders as $header) {
-                $rowData[] = $row[$header] ?? '';
+                $value = $row[$header] ?? '';
+                if (is_numeric($value)) {
+                    $value = number_format((float) $value, 2, '.', ',');
+                }
+                $rowData[] = $value;
             }
             fputcsv($csv, $rowData);
         }

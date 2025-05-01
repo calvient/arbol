@@ -31,7 +31,14 @@ const LineFormat = ({data}: LineGraphFormatProps) => {
               (dataMax: number) => Math.ceil(dataMax),
             ]}
           />
-          <Tooltip />
+          <Tooltip
+            formatter={(value: number) =>
+              value.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }
+          />
           {keys.map((key) => (
             <Line
               key={key}
