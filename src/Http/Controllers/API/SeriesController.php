@@ -133,7 +133,7 @@ class SeriesController extends Controller
     private function formatForChart(array $data, string $slice = '', string $aggregator = 'Default'): array
     {
         $formattedData = collect($data)
-            ->map(function ($rows, $key) use ($slice, $aggregator) {
+            ->map(function ($rows, $key) use ($slice, $aggregator, $data) {
                 $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
                 $series = new $seriesInfo['class'];
                 $slices = $series->slices();
@@ -149,6 +149,21 @@ class SeriesController extends Controller
 
                 $isArray = is_array($rows[0] ?? null);
 
+                // Get all possible slice values from the current rows
+                $allSliceValues = collect($data)
+                    ->flatMap(function ($rows) use ($slices, $slice) {
+                        $isArray = is_array($rows[0] ?? null);
+
+                        return collect($isArray ? $rows : [$rows])
+                            ->filter(fn ($row) => count($row) > 0)
+                            ->map(fn ($row) => $slices[$slice]($row))
+                            ->unique()
+                            ->values();
+                    })
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
                 // Get the count for each slice key
                 $totals = collect($isArray ? $rows : [$rows])
                     // Filter out empty rows
@@ -156,6 +171,14 @@ class SeriesController extends Controller
                     ->groupBy($slices[$slice])
                     ->map(fn ($rows) => round($aggregatorFn($rows), 2))
                     ->toArray();
+
+                // Ensure all possible slice values are included with 0 as default
+                foreach ($allSliceValues as $sliceValue) {
+                    if (! isset($totals[$sliceValue])) {
+                        $totals[$sliceValue] = 0;
+                    }
+                }
+
                 $totals['name'] = $key;
 
                 return $totals;
