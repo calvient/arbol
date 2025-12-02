@@ -12,8 +12,10 @@
 */
 
 use Calvient\Arbol\Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(TestCase::class)->in('Feature');
+uses(TestCase::class)->in('Feature', 'Unit');
+uses(RefreshDatabase::class)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -41,7 +43,14 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Create a test user for authentication
+ */
+function createTestUser(array $attributes = []): \Calvient\Arbol\Tests\TestUser
 {
-    // ..
+    return \Calvient\Arbol\Tests\TestUser::create(array_merge([
+        'name' => 'Test User',
+        'email' => 'test'.uniqid().'@example.com',
+        'client_id' => null,
+    ], $attributes));
 }

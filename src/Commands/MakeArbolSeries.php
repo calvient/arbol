@@ -39,8 +39,6 @@ class MakeArbolSeries extends Command
 
         class $className implements IArbolSeries
         {
-            public ?User \$user = null;
-
             public function name(): string
             {
                 // This is the name that will be displayed in the Arbol UI
@@ -55,29 +53,33 @@ class MakeArbolSeries extends Command
 
             public function data(ArbolBag \$arbolBag, \$user = null): array
             {
-                // This should return an array of data that will be used in the series.$
+                // This should return an array of data that will be used in the series.
+                // You can use \$arbolBag to apply filters and slices.
+                // The \$user parameter is the authenticated user (if any).
                 return [];
             }
 
             public function slices(): array
             {
                 // This should return an array of functions that could be used to slice the data.
+                // e.g. ['State' => fn(\$row) => \$row['state']]
                 return [];
             }
 
             public function filters(): array
             {
                 // This should return a 2 dimensional array of filters that could be used to filter the data.
-                // e.g. [['question' => ['option1 => fn(), 'option2' => fn()...]]
+                // e.g. ['question' => ['option1' => fn(\$query) => \$query->where(...), 'option2' => fn(\$query) => ...]]
                 return [];
             }
 
             public function aggregators(): array
             {
-                // This should return a single value that represents the data.
-                // It may often just be the count of rows. But you can also sum, average, etc.
+                // This should return functions that aggregate the data.
+                // Each aggregator takes a collection of rows and returns a single value.
+                // Common aggregators: count, sum, average, etc.
                 return [
-                   'Default' => fn(\$rows) => count(\$rows),
+                    'Default' => fn(\$rows) => count(\$rows),
                 ];
             }
         }

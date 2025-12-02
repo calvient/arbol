@@ -26,7 +26,7 @@ class ArbolBag
         return $this->filters;
     }
 
-    public function getSlice(): string
+    public function getSlice(): ?string
     {
         return $this->slice;
     }

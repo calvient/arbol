@@ -107,6 +107,29 @@ class SectionsController extends Controller
 
     private function validateReportAccess(ArbolReport $report): void
     {
-        abort_if($report->author_id !== auth()->id() && ! in_array(auth()->id(), $report->user_ids), 403);
+        // Check user has access to the report
+        abort_if(
+            $report->author_id !== auth()->id()
+            && ! in_array(auth()->id(), $report->user_ids ?? [])
+            && ! in_array(-1, $report->user_ids ?? []),
+            403
+        );
+
+        // Ensure user can only access reports within their client
+        $userClientId = $this->getUserClientId();
+        if ($userClientId && $report->client_id !== $userClientId) {
+            abort(403);
+        }
+    }
+
+    private function getUserClientId(): ?int
+    {
+        $user = auth()->user();
+
+        if ($user && isset($user->client_id)) {
+            return $user->client_id;
+        }
+
+        return null;
     }
 }

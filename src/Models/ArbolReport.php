@@ -2,10 +2,20 @@
 
 namespace Calvient\Arbol\Models;
 
+use Calvient\Arbol\Database\Factories\ArbolReportFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ArbolReport extends Model
 {
+    /** @use HasFactory<ArbolReportFactory> */
+    use HasFactory;
+
+    protected static function newFactory(): ArbolReportFactory
+    {
+        return ArbolReportFactory::new();
+    }
+
     protected $guarded = ['id', 'client_id'];
 
     protected $casts = [
