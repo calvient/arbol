@@ -3,6 +3,7 @@
 namespace Calvient\Arbol\Http\Controllers\API;
 
 use Calvient\Arbol\Jobs\LoadSectionData;
+use Calvient\Arbol\Models\ArbolReport;
 use Calvient\Arbol\Models\ArbolSection;
 use Calvient\Arbol\Services\ArbolService;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +37,12 @@ class SeriesController extends Controller
 
         // Get the section from the database
         $section = ArbolSection::findOrFail(request('section_id'));
+
+        // Ensure user can only access sections within their client (via report)
+        $report = ArbolReport::findOrFail($section->arbol_report_id);
+        if ($this->getUserClientId() && $report->client_id !== $this->getUserClientId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
 
         // Clear the cache if the force_refresh parameter is set
         if (request('force_refresh')) {
@@ -106,6 +113,12 @@ class SeriesController extends Controller
 
         // Get the section from the database
         $section = ArbolSection::findOrFail(request('section_id'));
+
+        // Ensure user can only access sections within their client (via report)
+        $report = ArbolReport::findOrFail($section->arbol_report_id);
+        if ($this->getUserClientId() && $report->client_id !== $this->getUserClientId()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
 
         // Get the cached data
         $data = $this->arbolService->getDataFromCache(
@@ -290,5 +303,16 @@ class SeriesController extends Controller
         }
 
         return $flattenedData;
+    }
+
+    private function getUserClientId(): ?int
+    {
+        $user = auth()->user();
+
+        if ($user && isset($user->client_id)) {
+            return $user->client_id;
+        }
+
+        return null;
     }
 }

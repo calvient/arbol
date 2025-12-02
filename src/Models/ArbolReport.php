@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ArbolReport extends Model
 {
-    protected $guarded = ['id'];
+    protected $guarded = ['id', 'client_id'];
 
     protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i',

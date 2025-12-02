@@ -1,0 +1,53 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('arbol_reports', function (Blueprint $table) {
+            $table->unsignedBigInteger('client_id')->nullable()->after('author_id');
+        });
+
+        // Backfill client_id from user's client_id
+        $this->backfillClientIds();
+    }
+
+    public function down(): void
+    {
+        Schema::table('arbol_reports', function (Blueprint $table) {
+            $table->dropColumn('client_id');
+        });
+    }
+
+    private function backfillClientIds(): void
+    {
+        $userModel = config('arbol.user_model');
+        $usersTable = (new $userModel)->getTable();
+
+        // Check if the users table has a client_id column
+        if (! Schema::hasColumn($usersTable, 'client_id')) {
+            return;
+        }
+
+        // Get all unique author_ids from arbol_reports
+        $authorIds = DB::table('arbol_reports')
+            ->distinct()
+            ->pluck('author_id');
+
+        // Look up each user and update the report's client_id
+        foreach ($authorIds as $authorId) {
+            $user = DB::table($usersTable)->where('id', $authorId)->first();
+
+            if ($user && isset($user->client_id) && $user->client_id) {
+                DB::table('arbol_reports')
+                    ->where('author_id', $authorId)
+                    ->update(['client_id' => $user->client_id]);
+            }
+        }
+    }
+};

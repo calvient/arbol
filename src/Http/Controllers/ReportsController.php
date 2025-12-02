@@ -11,14 +11,25 @@ class ReportsController extends Controller
 {
     public function index(): Response
     {
+        $query = ArbolReport::with(['author:id,name'])->mine();
+
+        if ($this->getUserClientId()) {
+            $query->where('client_id', $this->getUserClientId());
+        }
+
         return Inertia::render('Reports/Index', [
-            'reports' => ArbolReport::with(['author:id,name'])->mine()->get(),
+            'reports' => $query->get(),
         ]);
     }
 
     public function show(ArbolReport $report): Response
     {
         $this->validateReportAccess($report);
+
+        // Ensure user can only access reports within their client
+        if ($this->getUserClientId() && $report->client_id !== $this->getUserClientId()) {
+            abort(403);
+        }
 
         return Inertia::render('Reports/Show', [
             'report' => $report->load([
@@ -43,12 +54,14 @@ class ReportsController extends Controller
             'description' => 'nullable',
         ]);
 
-        ArbolReport::create([
+        $report = ArbolReport::create([
             'name' => request('name'),
             'description' => request('description'),
             'author_id' => auth()->id(),
             'user_ids' => [auth()->id()],
         ]);
+        $report->client_id = $this->getUserClientId();
+        $report->save();
 
         return redirect()->route('arbol.reports.index');
     }
@@ -110,5 +123,16 @@ class ReportsController extends Controller
         }
 
         return $query->get(['id', 'name']);
+    }
+
+    private function getUserClientId(): ?int
+    {
+        $user = auth()->user();
+
+        if ($user && isset($user->client_id)) {
+            return $user->client_id;
+        }
+
+        return null;
     }
 }
