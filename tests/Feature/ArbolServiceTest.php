@@ -72,11 +72,36 @@ test('it stores and retrieves data from cache', function () {
     expect($retrieved)->toBe($data);
 });
 
+test('it stores and retrieves formatted data from cache', function () {
+    $service = new ArbolService;
+    $section = ArbolSection::factory()->create();
+
+    $formattedData = [
+        ['name' => 'California', 'value' => 100],
+        ['name' => 'New York', 'value' => 200],
+    ];
+
+    $service->storeFormattedDataInCache($section, $formattedData);
+
+    $retrieved = $service->getFormattedDataFromCache($section);
+
+    expect($retrieved)->toBe($formattedData);
+});
+
 test('it returns null when no cached data exists', function () {
     $service = new ArbolService;
     $section = ArbolSection::factory()->create();
 
     $retrieved = $service->getDataFromCache($section);
+
+    expect($retrieved)->toBeNull();
+});
+
+test('it returns null when no formatted cached data exists', function () {
+    $service = new ArbolService;
+    $section = ArbolSection::factory()->create();
+
+    $retrieved = $service->getFormattedDataFromCache($section);
 
     expect($retrieved)->toBeNull();
 });
@@ -110,11 +135,13 @@ test('it clears cache for section', function () {
 
     // Set up some cached data
     $service->storeDataInCache($section, ['test' => 'data']);
+    $service->storeFormattedDataInCache($section, [['name' => 'test', 'value' => 1]]);
     $service->setIsRunning($section, true);
     $service->setLastRunDuration($section, 60);
 
     // Verify data is cached
     expect($service->getDataFromCache($section))->not->toBeNull();
+    expect($service->getFormattedDataFromCache($section))->not->toBeNull();
     expect($service->getIsRunning($section))->toBeTrue();
     expect($service->getLastRunDuration($section))->toBe(60);
 
@@ -123,6 +150,7 @@ test('it clears cache for section', function () {
 
     // Verify data is cleared
     expect($service->getDataFromCache($section))->toBeNull();
+    expect($service->getFormattedDataFromCache($section))->toBeNull();
     expect($service->getIsRunning($section))->toBeFalse();
     expect($service->getLastRunDuration($section))->toBeNull();
 });

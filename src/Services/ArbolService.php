@@ -66,9 +66,21 @@ class ArbolService
         Cache::put("arbol:section:{$arbolSection->id}", json_encode($data), now()->addDays(14));
     }
 
+    public function storeFormattedDataInCache(ArbolSection $arbolSection, mixed $data): void
+    {
+        Cache::put("arbol:section:{$arbolSection->id}:formatted", json_encode($data), now()->addDays(14));
+    }
+
     public function getDataFromCache(ArbolSection $arbolSection): mixed
     {
         $data = Cache::get("arbol:section:{$arbolSection->id}");
+
+        return $data ? json_decode($data, true) : null;
+    }
+
+    public function getFormattedDataFromCache(ArbolSection $arbolSection): mixed
+    {
+        $data = Cache::get("arbol:section:{$arbolSection->id}:formatted");
 
         return $data ? json_decode($data, true) : null;
     }
@@ -96,6 +108,7 @@ class ArbolService
     public function clearCacheForSection(ArbolSection $arbolSection): void
     {
         Cache::forget("arbol:section:{$arbolSection->id}");
+        Cache::forget("arbol:section:{$arbolSection->id}:formatted");
         Cache::forget("arbol:section:{$arbolSection->id}:last_kicked_off");
         Cache::forget("arbol:section:{$arbolSection->id}:is_running");
         Cache::forget("arbol:section:{$arbolSection->id}:last_run_duration");

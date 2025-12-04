@@ -139,3 +139,83 @@ test('it handles non-existent series gracefully', function () {
     // No data should be cached
     expect($arbolService->getDataFromCache($section))->toBeNull();
 });
+
+test('it stores formatted data when format is bar', function () {
+    $section = ArbolSection::factory()->withSeries('Test Series')->withSlice('State')->create();
+    $arbolService = app(ArbolService::class);
+
+    $job = new LoadSectionData(
+        arbolSection: $section,
+        series: 'Test Series',
+        filters: [],
+        slice: 'State',
+        user: null,
+        format: 'bar',
+        aggregator: 'Default',
+        chartSlice: null,
+    );
+
+    $job->handle($arbolService);
+
+    // Raw data should be stored
+    $rawData = $arbolService->getDataFromCache($section);
+    expect($rawData)->not->toBeNull();
+
+    // Formatted data should also be stored
+    $formattedData = $arbolService->getFormattedDataFromCache($section);
+    expect($formattedData)->not->toBeNull()
+        ->and($formattedData)->toBeArray()
+        ->and($formattedData[0])->toHaveKeys(['name', 'value']);
+});
+
+test('it does not store formatted data when format is table', function () {
+    $section = ArbolSection::factory()->withSeries('Test Series')->create();
+    $arbolService = app(ArbolService::class);
+
+    $job = new LoadSectionData(
+        arbolSection: $section,
+        series: 'Test Series',
+        filters: [],
+        slice: null,
+        user: null,
+        format: 'table',
+    );
+
+    $job->handle($arbolService);
+
+    // Raw data should be stored
+    $rawData = $arbolService->getDataFromCache($section);
+    expect($rawData)->not->toBeNull();
+
+    // Formatted data should NOT be stored for table format
+    $formattedData = $arbolService->getFormattedDataFromCache($section);
+    expect($formattedData)->toBeNull();
+});
+
+test('it stores formatted data for pie format with aggregator', function () {
+    $section = ArbolSection::factory()->withSeries('Test Series')->withSlice('State')->create();
+    $arbolService = app(ArbolService::class);
+
+    $job = new LoadSectionData(
+        arbolSection: $section,
+        series: 'Test Series',
+        filters: [],
+        slice: 'State',
+        user: null,
+        format: 'pie',
+        aggregator: 'Sum',
+        chartSlice: null,
+    );
+
+    $job->handle($arbolService);
+
+    // Formatted data should be stored with aggregated values
+    $formattedData = $arbolService->getFormattedDataFromCache($section);
+    expect($formattedData)->not->toBeNull()
+        ->and($formattedData)->toBeArray();
+
+    // Check that values are aggregated (Sum aggregator sums the 'value' field)
+    $caItem = collect($formattedData)->firstWhere('name', 'CA');
+    expect($caItem)->not->toBeNull()
+        ->and((float) $caItem['value'])->toBe(100.0); // Test data has CA with value 100
+});

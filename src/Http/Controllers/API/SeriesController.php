@@ -49,7 +49,22 @@ class SeriesController extends Controller
             $this->arbolService->clearCacheForSection($section);
         }
 
-        // Get the cached data
+        // For chart formats, check formatted cache first (pre-computed in job)
+        if (in_array(request('format'), ['line', 'bar', 'pie'])) {
+            $formattedData = $this->arbolService->getFormattedDataFromCache(
+                arbolSection: $section
+            );
+
+            if (! is_null($formattedData)) {
+                if (empty($formattedData)) {
+                    $formattedData = [['name' => 'No data found', 'value' => 0]];
+                }
+
+                return response()->json($formattedData);
+            }
+        }
+
+        // Get raw cached data (for table format or as fallback)
         $data = $this->arbolService->getDataFromCache(
             arbolSection: $section
         );
@@ -80,6 +95,9 @@ class SeriesController extends Controller
                     ? request('xaxis_slice')
                     : request('slice'),
                 user: auth()->user(),
+                format: request('format'),
+                aggregator: request('aggregator', 'Default'),
+                chartSlice: request('slice'),
             );
         }
 

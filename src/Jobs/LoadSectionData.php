@@ -2,6 +2,7 @@
 
 namespace Calvient\Arbol\Jobs;
 
+use Calvient\Arbol\Contracts\IArbolSeries;
 use Calvient\Arbol\DataObjects\ArbolBag;
 use Calvient\Arbol\Models\ArbolSection;
 use Calvient\Arbol\Services\ArbolService;
@@ -24,7 +25,16 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
     public $timeout = 600;
 
-    public function __construct(public ArbolSection $arbolSection, public string $series, public array $filters, public ?string $slice, public $user = null) {}
+    public function __construct(
+        public ArbolSection $arbolSection,
+        public string $series,
+        public array $filters,
+        public ?string $slice,
+        public $user = null,
+        public string $format = 'table',
+        public string $aggregator = 'Default',
+        public ?string $chartSlice = null,
+    ) {}
 
     public function handle(ArbolService $arbolService): void
     {
@@ -80,9 +90,16 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
         logger()->info("Data for section {$this->arbolSection->name} loaded");
 
-        // Store data in cache
+        // Store raw data in cache (for table format and downloads)
         $arbolService->storeDataInCache($this->arbolSection, $data);
-        logger()->info("Data for section {$this->arbolSection->name} stored");
+        logger()->info("Data for section {$this->arbolSection->name} raw data stored");
+
+        // Format and store formatted data for charts (to avoid expensive formatting on each request)
+        if ($this->format !== 'table') {
+            $formattedData = $this->formatData($data->toArray(), $seriesInstance);
+            $arbolService->storeFormattedDataInCache($this->arbolSection, $formattedData);
+            logger()->info("Data for section {$this->arbolSection->name} formatted data stored");
+        }
 
         // Store the run time in cache in seconds
         $arbolService->setLastRunDuration($this->arbolSection, $seconds);
@@ -115,6 +132,104 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         }
 
         return $data;
+    }
+
+    protected function formatData(array $data, IArbolSeries $seriesInstance): array
+    {
+        return match ($this->format) {
+            'table' => $data,
+            'line', 'bar' => $this->formatForChart($data, $seriesInstance),
+            'pie' => $this->formatForPie($data, $seriesInstance),
+            default => $data,
+        };
+    }
+
+    protected function formatForChart(array $data, IArbolSeries $seriesInstance): array
+    {
+        $slices = $seriesInstance->slices();
+        $aggregators = $seriesInstance->aggregators();
+        $aggregatorFn = $aggregators[$this->aggregator] ?? $aggregators['Default'];
+        $slice = $this->chartSlice;
+
+        return collect($data)
+            ->map(function ($rows, $key) use ($slice, $aggregatorFn, $slices, $data) {
+                if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null' || ! isset($slices[$slice])) {
+                    return [
+                        'name' => $key,
+                        'value' => round($aggregatorFn($rows), 2),
+                    ];
+                }
+
+                $isArray = is_array($rows[0] ?? null);
+
+                // Get all possible slice values from the current rows
+                $allSliceValues = collect($data)
+                    ->flatMap(function ($rows) use ($slices, $slice) {
+                        $isArray = is_array($rows[0] ?? null);
+
+                        return collect($isArray ? $rows : [$rows])
+                            ->filter(fn ($row) => count($row) > 0)
+                            ->map(fn ($row) => $slices[$slice]($row))
+                            ->unique()
+                            ->values();
+                    })
+                    ->unique()
+                    ->values()
+                    ->toArray();
+
+                // Get the count for each slice key
+                $totals = collect($isArray ? $rows : [$rows])
+                    ->filter(fn ($row) => count($row) > 0)
+                    ->groupBy($slices[$slice])
+                    ->map(fn ($rows) => round($aggregatorFn($rows), 2))
+                    ->toArray();
+
+                // Ensure all possible slice values are included with 0 as default
+                foreach ($allSliceValues as $sliceValue) {
+                    if (! isset($totals[$sliceValue])) {
+                        $totals[$sliceValue] = 0;
+                    }
+                }
+
+                $totals['name'] = $key;
+
+                return $totals;
+            })
+            ->values()
+            ->toArray();
+    }
+
+    protected function formatForPie(array $data, IArbolSeries $seriesInstance): array
+    {
+        $aggregators = $seriesInstance->aggregators();
+
+        // If no aggregator is defined or 'Default' is not in the aggregators list, fall back to counting rows
+        if (! isset($aggregators[$this->aggregator]) && ! isset($aggregators['Default'])) {
+            return collect($data)
+                ->map(fn ($value, $key) => [
+                    'name' => $key,
+                    'value' => count($value),
+                ])
+                ->values()
+                ->toArray();
+        }
+
+        $aggregatorFn = $aggregators[$this->aggregator] ?? $aggregators['Default'];
+
+        return collect($data)
+            ->map(function ($value, $key) use ($aggregatorFn) {
+                $aggregatedValue = $aggregatorFn($value);
+                $aggregatedValue = is_string($aggregatedValue)
+                    ? (float) $aggregatedValue
+                    : $aggregatedValue;
+
+                return [
+                    'name' => $key,
+                    'value' => round($aggregatedValue, 2),
+                ];
+            })
+            ->values()
+            ->toArray();
     }
 
     public function uniqueId(): string
