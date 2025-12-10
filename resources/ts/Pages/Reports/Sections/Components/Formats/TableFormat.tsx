@@ -1,5 +1,5 @@
 import {Box, Select, Table, Tbody, Td, Th, Thead, Tr} from '@calvient/decal';
-import React, {useState} from 'react';
+import React from 'react';
 import {
   createColumnHelper,
   flexRender,
@@ -16,15 +16,18 @@ type Row = Record<string, string | number | null>;
 
 interface TableFormatProps {
   data: Record<string, Row[]>;
+  currentSlice: string | null;
+  onSliceChange: (slice: string) => void;
 }
 
-const TableFormat = ({data}: TableFormatProps) => {
+const TableFormat = ({data, currentSlice, onSliceChange}: TableFormatProps) => {
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
-  const [currentSlice, setCurrentSlice] = useState<string>(Object.keys(data)[0]);
   const slices = Object.keys(data);
+  // Use the first slice as fallback if currentSlice is null or not in data
+  const activeSlice = currentSlice && currentSlice in data ? currentSlice : slices[0];
 
   const columnHelper = createColumnHelper();
 
@@ -37,8 +40,8 @@ const TableFormat = ({data}: TableFormatProps) => {
   );
 
   const rows = React.useMemo(() => {
-    return data[currentSlice];
-  }, [data, currentSlice]);
+    return data[activeSlice];
+  }, [data, activeSlice]);
 
   const table = useReactTable({
     // @ts-expect-error -- Because the columns are dynamically generated
@@ -56,8 +59,8 @@ const TableFormat = ({data}: TableFormatProps) => {
   return (
     <Box w={'full'} mt={4}>
       <Select
-        value={currentSlice}
-        onChange={(e) => setCurrentSlice(e.target.value)}
+        value={activeSlice}
+        onChange={(e) => onSliceChange(e.target.value)}
         boxShadow={'0 -1px 0 rgba(0, 0, 0, 0.2)'}
       >
         {slices.map((slice) => (

@@ -122,6 +122,7 @@ class SeriesController extends Controller
             'xaxis_slice' => 'nullable|string',
             'aggregator' => 'nullable|string',
             'format' => 'required|string',
+            'slice_key' => 'nullable|string',
         ]);
 
         // Return validation errors if validation fails
@@ -138,12 +139,18 @@ class SeriesController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // Get the cached data
+        // Get the cached data (avoids timeout issues with large datasets)
         $data = $this->arbolService->getDataFromCache(
             arbolSection: $section
         );
         if (! $data) {
-            abort(404, 'Data not found');
+            abort(404, 'Data not found. Please view the report first to generate the data.');
+        }
+
+        // Filter to specific slice key if provided (for table format downloads)
+        $sliceKey = request('slice_key');
+        if ($sliceKey && isset($data[$sliceKey])) {
+            $data = [$sliceKey => $data[$sliceKey]];
         }
 
         $formattedData = match (request('format')) {

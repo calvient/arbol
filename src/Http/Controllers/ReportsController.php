@@ -2,13 +2,17 @@
 
 namespace Calvient\Arbol\Http\Controllers;
 
+use Calvient\Arbol\Contracts\ArbolAccess;
 use Calvient\Arbol\Models\ArbolReport;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ReportsController extends Controller
 {
+    public function __construct(private ArbolAccess $arbolAccess) {}
+
     public function index(): Response
     {
         $query = ArbolReport::with(['author:id,name'])->mine();
@@ -57,8 +61,9 @@ class ReportsController extends Controller
         $report = ArbolReport::create([
             'name' => request('name'),
             'description' => request('description'),
-            'author_id' => auth()->id(),
-            'user_ids' => [auth()->id()],
+            'author_id' => Auth::id(),
+            'user_ids' => [Auth::id()],
+            'team_ids' => $this->arbolAccess->getUserTeamIds(Auth::user()),
         ]);
         $report->client_id = $this->getUserClientId();
         $report->save();
@@ -73,6 +78,7 @@ class ReportsController extends Controller
         return Inertia::render('Reports/Edit', [
             'report' => $report,
             'allUsers' => $this->getArbolUsers(),
+            'allTeams' => $this->getArbolTeams(),
         ]);
     }
 
@@ -83,13 +89,15 @@ class ReportsController extends Controller
         request()->validate([
             'name' => 'required|string|min:3|max:255',
             'description' => 'nullable',
-            'users' => 'nullable|array',
+            'user_ids' => 'nullable|array',
+            'team_ids' => 'nullable|array',
         ]);
 
         $report->update([
             'name' => request('name'),
             'description' => request('description'),
             'user_ids' => request('user_ids', [$report->author_id]),
+            'team_ids' => request('team_ids', $this->arbolAccess->getUserTeamIds(Auth::user())),
         ]);
 
         return redirect()->route('arbol.reports.show', $report);
@@ -106,28 +114,25 @@ class ReportsController extends Controller
 
     private function validateReportAccess(ArbolReport $report): void
     {
-        abort_if($report->author_id !== auth()->id()
-            && ! in_array(auth()->id(), $report->user_ids)
-            && ! in_array(-1, $report->user_ids),
-            403);
+        abort_unless(
+            $this->arbolAccess->userCanAccessReport(Auth::user(), $report),
+            403
+        );
     }
 
     private function getArbolUsers()
     {
-        $userModelClass = config('arbol.user_model');
-        $query = $userModelClass::query();
+        return $this->arbolAccess->getUsers();
+    }
 
-        // Check if the arbol scope exists and apply it if it does
-        if (method_exists($userModelClass, 'scopeArbol')) {
-            $query = $userModelClass::arbol();
-        }
-
-        return $query->get(['id', 'name']);
+    private function getArbolTeams()
+    {
+        return $this->arbolAccess->getTeams();
     }
 
     private function getUserClientId(): ?int
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if ($user && isset($user->client_id)) {
             return $user->client_id;

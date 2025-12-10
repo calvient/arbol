@@ -17,10 +17,15 @@ import AutoComplete from '../../Components/AutoComplete.tsx';
 interface Props {
   report: Report;
   allUsers: {id: number; name: string}[];
+  allTeams: {id: number; name: string}[];
 }
 
-const Edit = ({report, allUsers}: Props) => {
-  const {data, setData, put, processing, errors} = useForm(report);
+const Edit = ({report, allUsers, allTeams}: Props) => {
+  const {data, setData, put, processing, errors} = useForm({
+    ...report,
+    user_ids: report.user_ids ?? [],
+    team_ids: report.team_ids ?? [],
+  });
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,6 +45,11 @@ const Edit = ({report, allUsers}: Props) => {
     label: 'Everyone',
     value: -1,
   });
+
+  const teamOptions = allTeams.map((t) => ({
+    label: t.name,
+    value: t.id,
+  }));
 
   return (
     <form onSubmit={submit}>
@@ -74,6 +84,17 @@ const Edit = ({report, allUsers}: Props) => {
             options={userOptions}
             onChange={(values) => {
               setData('user_ids', castToNumber(values));
+            }}
+          />
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>Team Access</FormLabel>
+          <AutoComplete
+            values={(data.team_ids as number[]) ?? []}
+            options={teamOptions}
+            onChange={(values) => {
+              setData('team_ids', castToNumber(values));
             }}
           />
         </FormControl>

@@ -15,10 +15,12 @@ interface ReportSectionProps {
 }
 
 const ReportSection = ({report, section}: ReportSectionProps) => {
-  const [data, setData] = useState(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [currentSlice, setCurrentSlice] = useState<string | null>(null);
 
   const loadData = async (forceRefresh: boolean = false) => {
     setIsLoading(true);
@@ -46,6 +48,13 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
     if (response.status === 200) {
       const data = await response.json();
       setData(data);
+      // Initialize currentSlice to first slice key when data loads
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        const keys = Object.keys(data);
+        if (keys.length > 0 && !currentSlice) {
+          setCurrentSlice(keys[0]);
+        }
+      }
       setIsLoading(false);
     } else if (response.status === 202) {
       const data = await response.json();
@@ -124,6 +133,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
             aggregator: section.aggregator,
             filters: section.filters,
             format: section.format,
+            slice_key: currentSlice,
           })}`}
           size={'xs'}
         >
@@ -138,7 +148,9 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         </Button>
       </HStack>
 
-      {section.format === 'table' && <TableFormat data={data} />}
+      {section.format === 'table' && (
+        <TableFormat data={data} currentSlice={currentSlice} onSliceChange={setCurrentSlice} />
+      )}
       {section.format === 'pie' && <PieFormat data={data} />}
       {section.format === 'line' && <LineFormat data={data} />}
       {section.format === 'bar' && <BarFormat data={data} />}

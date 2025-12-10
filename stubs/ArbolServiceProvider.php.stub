@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Providers;
+
+use Calvient\Arbol\Contracts\ArbolAccess;
+use Calvient\Arbol\Models\ArbolReport;
+use Illuminate\Support\Collection;
+use Illuminate\Support\ServiceProvider;
+
+class ArbolServiceProvider extends ServiceProvider implements ArbolAccess
+{
+    public function register(): void
+    {
+        // Bind this provider as the Arbol access resolver.
+        $this->app->singleton(ArbolAccess::class, fn ($app) => $app->make(self::class));
+    }
+
+    public function boot(): void
+    {
+        //
+    }
+
+    public function getUsers(): Collection
+    {
+        $userModel = config('arbol.user_model');
+        $query = $userModel::query();
+
+        if (method_exists($userModel, 'scopeArbol')) {
+            $query = $userModel::arbol();
+        }
+
+        return $query->get(['id', 'name']);
+    }
+
+    public function getTeams(): Collection
+    {
+        $teamModel = $this->getTeamModel();
+
+        if (! $teamModel) {
+            return collect();
+        }
+
+        $query = $teamModel::query();
+
+        if (method_exists($teamModel, 'scopeArbol')) {
+            $query = $teamModel::arbol();
+        }
+
+        return $query->get(['id', 'name']);
+    }
+
+    public function getUserTeamIds($user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        if (method_exists($user, 'teams')) {
+            return $user->teams->pluck('id')->all();
+        }
+
+        if (property_exists($user, 'team_id')) {
+            return [$user->team_id];
+        }
+
+        return [];
+    }
+
+    public function userCanAccessReport($user, ArbolReport $report): bool
+    {
+        if (! $user || ! isset($user->id)) {
+            return false;
+        }
+
+        $userId = $user->id;
+        $userIds = $report->user_ids ?? [];
+
+        if ($report->author_id === $userId) {
+            return true;
+        }
+
+        if (in_array(-1, $userIds, true) || in_array($userId, $userIds, true)) {
+            return true;
+        }
+
+        $teamIds = $report->team_ids ?? [];
+        if (! empty($teamIds)) {
+            $userTeamIds = $this->getUserTeamIds($user);
+            if (array_intersect($teamIds, $userTeamIds)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function getTeamModel(): ?string
+    {
+        return config('arbol.team_model') ?? null;
+    }
+}
