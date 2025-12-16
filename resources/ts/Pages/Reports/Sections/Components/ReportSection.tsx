@@ -136,8 +136,26 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
             slice_key: currentSlice,
           })}`}
           size={'xs'}
+          title='Download current slice only'
         >
-          Download
+          Download View
+        </Button>
+        <Button
+          target='_blank'
+          as={ChakraLink}
+          href={`/arbol/series-data/download?${toQueryString({
+            section_id: section.id,
+            series: section.series,
+            slice: section.slice,
+            xaxis_slice: section.xaxis_slice,
+            aggregator: section.aggregator,
+            filters: section.filters,
+            format: section.format,
+          })}`}
+          size={'xs'}
+          title='Download all slices'
+        >
+          Download All
         </Button>
         <Button
           as={Link}
