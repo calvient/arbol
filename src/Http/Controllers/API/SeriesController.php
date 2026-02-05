@@ -16,6 +16,9 @@ class SeriesController extends Controller
 
     public function getSeriesData(): JsonResponse
     {
+        // Normalize percentage_mode: treat empty strings and "null" as actual null
+        $this->normalizePercentageMode();
+
         // Validate the request inputs
         $validator = Validator::make(request()->all(), [
             'section_id' => 'required|integer',
@@ -116,6 +119,9 @@ class SeriesController extends Controller
 
     public function downloadData()
     {
+        // Normalize percentage_mode: treat empty strings and "null" as actual null
+        $this->normalizePercentageMode();
+
         // Validate the request inputs
         $validator = Validator::make(request()->all(), [
             'section_id' => 'required|integer',
@@ -396,6 +402,14 @@ class SeriesController extends Controller
         }
 
         return $flattenedData;
+    }
+
+    private function normalizePercentageMode(): void
+    {
+        $value = request('percentage_mode');
+        if ($value === 'null' || $value === '') {
+            request()->merge(['percentage_mode' => null]);
+        }
     }
 
     private function getUserClientId(): ?int
