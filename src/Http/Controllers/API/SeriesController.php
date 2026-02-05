@@ -27,6 +27,7 @@ class SeriesController extends Controller
             'filters.*.field' => 'required|string',
             'filters.*.value' => 'required|string',
             'format' => 'required|string',
+            'percentage_mode' => 'nullable|string|in:xaxis_group,total',
             'force_refresh' => 'nullable|boolean',
         ]);
 
@@ -77,7 +78,7 @@ class SeriesController extends Controller
 
             $formattedData = match (request('format')) {
                 'table' => $this->formatForTable($data),
-                'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator')),
+                'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator'), request('percentage_mode')),
                 'pie' => $this->formatForPie($data),
                 default => abort(400, 'Invalid format parameter'),
             };
@@ -98,6 +99,7 @@ class SeriesController extends Controller
                 format: request('format'),
                 aggregator: request('aggregator', 'Default'),
                 chartSlice: request('slice'),
+                percentageMode: request('percentage_mode'),
             );
         }
 
@@ -122,6 +124,7 @@ class SeriesController extends Controller
             'xaxis_slice' => 'nullable|string',
             'aggregator' => 'nullable|string',
             'format' => 'required|string',
+            'percentage_mode' => 'nullable|string|in:xaxis_group,total',
             'slice_key' => 'nullable|string',
         ]);
 
@@ -155,7 +158,7 @@ class SeriesController extends Controller
 
         $formattedData = match (request('format')) {
             'table' => $this->formatForTable($data),
-            'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator')),
+            'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator'), request('percentage_mode')),
             'pie' => $this->formatForPie($data),
             default => abort(400, 'Invalid format parameter'),
         };
@@ -168,7 +171,7 @@ class SeriesController extends Controller
         return $data;
     }
 
-    private function formatForChart(array $data, string $slice = '', string $aggregator = 'Default'): array
+    private function formatForChart(array $data, string $slice = '', string $aggregator = 'Default', ?string $percentageMode = null): array
     {
         $formattedData = collect($data)
             ->map(function ($rows, $key) use ($slice, $aggregator, $data) {
@@ -224,7 +227,72 @@ class SeriesController extends Controller
             ->values()
             ->toArray();
 
+        if ($percentageMode) {
+            $formattedData = $this->applyPercentageMode($formattedData, $percentageMode);
+        }
+
         return $formattedData;
+    }
+
+    private function applyPercentageMode(array $data, string $percentageMode): array
+    {
+        if ($percentageMode === 'xaxis_group') {
+            // Calculate percentage within each x-axis group (row)
+            return array_map(function ($row) {
+                $numericTotal = 0;
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $numericTotal += $value;
+                    }
+                }
+
+                if ($numericTotal == 0) {
+                    return $row;
+                }
+
+                $result = [];
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $result[$key] = round(($value / $numericTotal) * 100, 2);
+                    } else {
+                        $result[$key] = $value;
+                    }
+                }
+
+                return $result;
+            }, $data);
+        }
+
+        if ($percentageMode === 'total') {
+            // Calculate percentage against grand total across all rows
+            $grandTotal = 0;
+            foreach ($data as $row) {
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $grandTotal += $value;
+                    }
+                }
+            }
+
+            if ($grandTotal == 0) {
+                return $data;
+            }
+
+            return array_map(function ($row) use ($grandTotal) {
+                $result = [];
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $result[$key] = round(($value / $grandTotal) * 100, 2);
+                    } else {
+                        $result[$key] = $value;
+                    }
+                }
+
+                return $result;
+            }, $data);
+        }
+
+        return $data;
     }
 
     private function formatForPie(array $data): array

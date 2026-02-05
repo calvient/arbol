@@ -136,21 +136,46 @@ const Create = ({report, series}: Props) => {
                       </RadioGroup>
                     </FormControl>
                     {['line', 'bar'].includes(data.format) && (
-                      <FormControl flex={1}>
-                        <FormLabel>Show on x-axis:</FormLabel>
-                        <RadioGroup
-                          onChange={(value) => setData('xaxis_slice', value)}
-                          value={data.xaxis_slice}
-                        >
-                          <VStack w={'full'}>
-                            {selectedSeries.slices.map((slice) => (
-                              <Radio w={'full'} key={slice} value={slice}>
-                                {slice}
-                              </Radio>
-                            ))}
-                          </VStack>
-                        </RadioGroup>
-                      </FormControl>
+                      <>
+                        <FormControl flex={1}>
+                          <FormLabel>Show on x-axis:</FormLabel>
+                          <RadioGroup
+                            onChange={(value) => setData('xaxis_slice', value)}
+                            value={data.xaxis_slice}
+                          >
+                            <VStack w={'full'}>
+                              {selectedSeries.slices.map((slice) => (
+                                <Radio w={'full'} key={slice} value={slice}>
+                                  {slice}
+                                </Radio>
+                              ))}
+                            </VStack>
+                          </RadioGroup>
+                        </FormControl>
+                        {data.xaxis_slice && (
+                          <FormControl flex={1}>
+                            <FormLabel>Percentage Mode:</FormLabel>
+                            <RadioGroup
+                              onChange={(value) =>
+                                setData('percentage_mode', value === 'none' ? null : value)
+                              }
+                              value={data.percentage_mode ?? 'none'}
+                            >
+                              <VStack w={'full'}>
+                                <Radio w={'full'} value={'none'}>
+                                  None
+                                </Radio>
+                                <Radio w={'full'} value={'xaxis_group'}>
+                                  % of X-Axis Group
+                                </Radio>
+                                <Radio w={'full'} value={'total'}>
+                                  % of Total
+                                </Radio>
+                              </VStack>
+                            </RadioGroup>
+                          </FormControl>
+                        )}
+                      </>
                     )}
                   </>
                 )}

@@ -75,6 +75,7 @@ class TestCase extends Orchestra
             $table->string('slice')->nullable();
             $table->string('xaxis_slice')->nullable();
             $table->string('aggregator')->nullable()->default('Default');
+            $table->string('percentage_mode')->nullable();
             $table->json('filters')->nullable();
             $table->string('format')->default('table');
             $table->integer('sequence')->default(0);

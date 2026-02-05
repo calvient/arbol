@@ -25,6 +25,7 @@ class TestSeries implements IArbolSeries
                 'name' => 'Test 1',
                 'state' => 'CA',
                 'city' => 'Los Angeles',
+                'month' => 'Jan',
                 'dob' => '1980-01-01',
                 'value' => 100,
             ],
@@ -32,6 +33,7 @@ class TestSeries implements IArbolSeries
                 'name' => 'Test 2',
                 'state' => 'NY',
                 'city' => 'New York',
+                'month' => 'Jan',
                 'dob' => '1985-01-01',
                 'value' => 200,
             ],
@@ -39,6 +41,7 @@ class TestSeries implements IArbolSeries
                 'name' => 'Test 3',
                 'state' => 'TX',
                 'city' => 'Houston',
+                'month' => 'Feb',
                 'dob' => '1990-01-01',
                 'value' => 150,
             ],
@@ -46,6 +49,7 @@ class TestSeries implements IArbolSeries
                 'name' => 'Test 4',
                 'state' => 'FL',
                 'city' => 'Miami',
+                'month' => 'Feb',
                 'dob' => '1995-01-01',
                 'value' => 250,
             ],
@@ -57,6 +61,7 @@ class TestSeries implements IArbolSeries
         return [
             'State' => fn ($row) => strtoupper($row['state']),
             'City' => fn ($row) => $row['city'],
+            'Month' => fn ($row) => $row['month'],
         ];
     }
 

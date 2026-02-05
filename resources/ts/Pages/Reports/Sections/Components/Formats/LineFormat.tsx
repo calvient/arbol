@@ -13,9 +13,18 @@ import {stringToColor} from '../../../../../Utils/stringToColor';
 
 interface LineGraphFormatProps {
   data: Array<{name: string; value: number}>;
+  isPercentage?: boolean;
 }
 
-const LineFormat = ({data}: LineGraphFormatProps) => {
+const formatNumber = (value: number, isPercentage?: boolean) => {
+  const formatted = value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return isPercentage ? `${formatted}%` : formatted;
+};
+
+const LineFormat = ({data, isPercentage}: LineGraphFormatProps) => {
   const keys = Object.keys(data[0]).filter((key) => key !== 'name');
 
   return (
@@ -26,19 +35,17 @@ const LineFormat = ({data}: LineGraphFormatProps) => {
           <CartesianGrid strokeDasharray='3 3' />
           <XAxis dataKey='name' />
           <YAxis
-            domain={[
-              (dataMin: number) => Math.floor(dataMin),
-              (dataMax: number) => Math.ceil(dataMax),
-            ]}
-          />
-          <Tooltip
-            formatter={(value: number) =>
-              value.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })
+            domain={
+              isPercentage
+                ? [0, 100]
+                : [
+                    (dataMin: number) => Math.floor(dataMin),
+                    (dataMax: number) => Math.ceil(dataMax),
+                  ]
             }
+            tickFormatter={(value: number) => formatNumber(value, isPercentage)}
           />
+          <Tooltip formatter={(value: number) => formatNumber(value, isPercentage)} />
           {keys.map((key) => (
             <Line
               key={key}

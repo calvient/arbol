@@ -26,6 +26,7 @@ class ArbolServiceProvider extends PackageServiceProvider
             ->hasMigration('add_aggregator_to_arbol_sections_table')
             ->hasMigration('add_client_id_to_arbol_reports_table')
             ->hasMigration('add_team_ids_to_arbol_reports_table')
+            ->hasMigration('add_percentage_mode_to_arbol_sections_table')
             ->hasCommand(MakeArbolSeries::class)
             ->hasCommand(ClearArbolCache::class);
     }

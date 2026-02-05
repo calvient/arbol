@@ -20,6 +20,7 @@ class ArbolSectionFactory extends Factory
             'slice' => null,
             'xaxis_slice' => null,
             'aggregator' => 'Default',
+            'percentage_mode' => null,
             'filters' => [],
             'format' => 'table',
             'sequence' => 0,

@@ -192,6 +192,124 @@ test('it does not store formatted data when format is table', function () {
     expect($formattedData)->toBeNull();
 });
 
+test('it applies xaxis_group percentage mode to bar chart data', function () {
+    $section = ArbolSection::factory()->withSeries('Test Series')->withSlice('Month')->create();
+    $arbolService = app(ArbolService::class);
+
+    // Data: Jan has CA(1) and NY(1), Feb has TX(1) and FL(1)
+    // With Default aggregator (count), grouped by Month (slice), sub-divided by State (chartSlice)
+    // Jan: {CA: 1, NY: 1} → 50% each
+    // Feb: {TX: 1, FL: 1} → 50% each
+    $job = new LoadSectionData(
+        arbolSection: $section,
+        series: 'Test Series',
+        filters: [],
+        slice: 'Month',
+        user: null,
+        format: 'bar',
+        aggregator: 'Default',
+        chartSlice: 'State',
+        percentageMode: 'xaxis_group',
+    );
+
+    $job->handle($arbolService);
+
+    $formattedData = $arbolService->getFormattedDataFromCache($section);
+    expect($formattedData)->not->toBeNull()
+        ->and($formattedData)->toBeArray();
+
+    $janItem = collect($formattedData)->firstWhere('name', 'Jan');
+    expect($janItem)->not->toBeNull();
+
+    // Each state in Jan should be 50% (1 out of 2)
+    $janValues = collect($janItem)->except('name')->filter(fn ($v) => is_numeric($v));
+    $janSum = $janValues->sum();
+    expect(round($janSum, 2))->toBe(100.0);
+
+    $febItem = collect($formattedData)->firstWhere('name', 'Feb');
+    expect($febItem)->not->toBeNull();
+
+    // Each state in Feb should be 50% (1 out of 2)
+    $febValues = collect($febItem)->except('name')->filter(fn ($v) => is_numeric($v));
+    $febSum = $febValues->sum();
+    expect(round($febSum, 2))->toBe(100.0);
+});
+
+test('it applies total percentage mode to bar chart data', function () {
+    $section = ArbolSection::factory()->withSeries('Test Series')->withSlice('Month')->create();
+    $arbolService = app(ArbolService::class);
+
+    // Grand total count = 4 (1 per state)
+    // Each state = 1/4 = 25%
+    $job = new LoadSectionData(
+        arbolSection: $section,
+        series: 'Test Series',
+        filters: [],
+        slice: 'Month',
+        user: null,
+        format: 'bar',
+        aggregator: 'Default',
+        chartSlice: 'State',
+        percentageMode: 'total',
+    );
+
+    $job->handle($arbolService);
+
+    $formattedData = $arbolService->getFormattedDataFromCache($section);
+    expect($formattedData)->not->toBeNull()
+        ->and($formattedData)->toBeArray();
+
+    // Sum of ALL numeric values across ALL rows should be 100%
+    $grandTotal = collect($formattedData)->sum(function ($row) {
+        return collect($row)->except('name')->filter(fn ($v) => is_numeric($v))->sum();
+    });
+    expect(round($grandTotal, 2))->toBe(100.0);
+
+    // States present in Jan (CA, NY) should each be 25% (1 out of 4 total)
+    // States not present in Jan (TX, FL) should be 0%
+    $janItem = collect($formattedData)->firstWhere('name', 'Jan');
+    $janNonZero = collect($janItem)->except('name')->filter(fn ($v) => is_numeric($v) && $v > 0);
+    foreach ($janNonZero as $value) {
+        expect(round($value, 2))->toBe(25.0);
+    }
+    expect($janNonZero)->toHaveCount(2); // CA and NY
+});
+
+test('it preserves existing behavior when percentage_mode is null', function () {
+    $section = ArbolSection::factory()->withSeries('Test Series')->withSlice('Month')->create();
+    $arbolService = app(ArbolService::class);
+
+    // Without percentage mode, values should be raw counts
+    $job = new LoadSectionData(
+        arbolSection: $section,
+        series: 'Test Series',
+        filters: [],
+        slice: 'Month',
+        user: null,
+        format: 'bar',
+        aggregator: 'Default',
+        chartSlice: 'State',
+        percentageMode: null,
+    );
+
+    $job->handle($arbolService);
+
+    $formattedData = $arbolService->getFormattedDataFromCache($section);
+    expect($formattedData)->not->toBeNull()
+        ->and($formattedData)->toBeArray();
+
+    $janItem = collect($formattedData)->firstWhere('name', 'Jan');
+    expect($janItem)->not->toBeNull();
+
+    // States present in Jan (CA, NY) should each have count 1
+    // States not present in Jan (TX, FL) should be 0
+    $janNonZero = collect($janItem)->except('name')->filter(fn ($v) => is_numeric($v) && $v > 0);
+    foreach ($janNonZero as $value) {
+        expect((float) $value)->toBe(1.0);
+    }
+    expect($janNonZero)->toHaveCount(2); // CA and NY
+});
+
 test('it stores formatted data for pie format with aggregator', function () {
     $section = ArbolSection::factory()->withSeries('Test Series')->withSlice('State')->create();
     $arbolService = app(ArbolService::class);

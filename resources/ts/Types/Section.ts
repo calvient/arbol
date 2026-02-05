@@ -8,6 +8,7 @@ export type Section = {
   slice: string;
   xaxis_slice?: string;
   aggregator?: string;
+  percentage_mode?: string | null;
   filters: Array<{field: string; value: string}>;
   format: string;
   sequence: number;

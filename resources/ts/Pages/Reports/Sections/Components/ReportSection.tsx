@@ -33,6 +33,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         slice: section.slice,
         xaxis_slice: section.xaxis_slice,
         aggregator: section.aggregator,
+        percentage_mode: section.percentage_mode,
         filters: section.filters,
         format: section.format,
         force_refresh: forceRefresh ? 1 : 0,
@@ -131,6 +132,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
             slice: section.slice,
             xaxis_slice: section.xaxis_slice,
             aggregator: section.aggregator,
+            percentage_mode: section.percentage_mode,
             filters: section.filters,
             format: section.format,
             slice_key: currentSlice,
@@ -149,6 +151,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
             slice: section.slice,
             xaxis_slice: section.xaxis_slice,
             aggregator: section.aggregator,
+            percentage_mode: section.percentage_mode,
             filters: section.filters,
             format: section.format,
           })}`}
@@ -170,8 +173,12 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         <TableFormat data={data} currentSlice={currentSlice} onSliceChange={setCurrentSlice} />
       )}
       {section.format === 'pie' && <PieFormat data={data} />}
-      {section.format === 'line' && <LineFormat data={data} />}
-      {section.format === 'bar' && <BarFormat data={data} />}
+      {section.format === 'line' && (
+        <LineFormat data={data} isPercentage={!!section.percentage_mode} />
+      )}
+      {section.format === 'bar' && (
+        <BarFormat data={data} isPercentage={!!section.percentage_mode} />
+      )}
     </Box>
   );
 };

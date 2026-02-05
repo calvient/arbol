@@ -34,6 +34,7 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         public string $format = 'table',
         public string $aggregator = 'Default',
         public ?string $chartSlice = null,
+        public ?string $percentageMode = null,
     ) {}
 
     public function handle(ArbolService $arbolService): void
@@ -136,12 +137,79 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
     protected function formatData(array $data, IArbolSeries $seriesInstance): array
     {
-        return match ($this->format) {
+        $formatted = match ($this->format) {
             'table' => $data,
             'line', 'bar' => $this->formatForChart($data, $seriesInstance),
             'pie' => $this->formatForPie($data, $seriesInstance),
             default => $data,
         };
+
+        if ($this->percentageMode && in_array($this->format, ['line', 'bar'])) {
+            $formatted = $this->applyPercentageMode($formatted);
+        }
+
+        return $formatted;
+    }
+
+    protected function applyPercentageMode(array $data): array
+    {
+        if ($this->percentageMode === 'xaxis_group') {
+            // Calculate percentage within each x-axis group (row)
+            return array_map(function ($row) {
+                $numericTotal = 0;
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $numericTotal += $value;
+                    }
+                }
+
+                if ($numericTotal == 0) {
+                    return $row;
+                }
+
+                $result = [];
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $result[$key] = round(($value / $numericTotal) * 100, 2);
+                    } else {
+                        $result[$key] = $value;
+                    }
+                }
+
+                return $result;
+            }, $data);
+        }
+
+        if ($this->percentageMode === 'total') {
+            // Calculate percentage against grand total across all rows
+            $grandTotal = 0;
+            foreach ($data as $row) {
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $grandTotal += $value;
+                    }
+                }
+            }
+
+            if ($grandTotal == 0) {
+                return $data;
+            }
+
+            return array_map(function ($row) use ($grandTotal) {
+                $result = [];
+                foreach ($row as $key => $value) {
+                    if ($key !== 'name' && is_numeric($value)) {
+                        $result[$key] = round(($value / $grandTotal) * 100, 2);
+                    } else {
+                        $result[$key] = $value;
+                    }
+                }
+
+                return $result;
+            }, $data);
+        }
+
+        return $data;
     }
 
     protected function formatForChart(array $data, IArbolSeries $seriesInstance): array

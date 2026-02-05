@@ -35,6 +35,7 @@ class SectionsController extends Controller
             'aggregator' => 'nullable|string',
             'filters' => 'nullable|array',
             'format' => 'required|string',
+            'percentage_mode' => 'nullable|string|in:xaxis_group,total',
         ]);
 
         ArbolSection::create([
@@ -47,6 +48,7 @@ class SectionsController extends Controller
             'aggregator' => request('aggregator'),
             'filters' => request('filters'),
             'format' => request('format'),
+            'percentage_mode' => request('percentage_mode'),
         ]);
 
         return redirect()->route('arbol.reports.show', $report);
@@ -77,6 +79,7 @@ class SectionsController extends Controller
             'filters' => 'nullable|array',
             'format' => 'required|string',
             'sequence' => 'nullable|numeric|min:0',
+            'percentage_mode' => 'nullable|string|in:xaxis_group,total',
         ]);
 
         $section->update([
@@ -89,6 +92,7 @@ class SectionsController extends Controller
             'filters' => request('filters'),
             'format' => request('format'),
             'sequence' => request('sequence'),
+            'percentage_mode' => request('percentage_mode'),
         ]);
 
         $this->arbolService->clearCacheForSection($section);
