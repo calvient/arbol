@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    @vite('resources/ts/app.tsx', '/vendor/arbol')
     @inertiaHead
 </head>
 <body>
 @inertia
+<script src="/vendor/arbol/app.js" defer></script>
 </body>
 </html>
