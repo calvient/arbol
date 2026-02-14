@@ -39,9 +39,8 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
     public function handle(ArbolService $arbolService): void
     {
-        // Increase memory limit and disable execution time limit for this job
+        // Increase memory limit for large dataset processing
         ini_set('memory_limit', '2G');
-        set_time_limit(0);
 
         try {
             $arbolService->setIsRunning($this->arbolSection, true);

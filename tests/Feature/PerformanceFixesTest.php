@@ -130,35 +130,6 @@ test('formatForChart with Sum aggregator produces correct values across slices',
 
 /*
 |--------------------------------------------------------------------------
-| Fix 2: set_time_limit(0) — just verify the job completes
-|--------------------------------------------------------------------------
-|
-| This is a safety-net fix. We can't easily unit-test set_time_limit()
-| behavior, but we verify the job doesn't break from the added call.
-|
-*/
-
-test('job handle completes successfully with set_time_limit', function () {
-    $section = ArbolSection::factory()->withSeries('Test Series')->create();
-    $arbolService = app(ArbolService::class);
-
-    $job = new LoadSectionData(
-        arbolSection: $section,
-        series: 'Test Series',
-        filters: [],
-        slice: null,
-        user: null,
-    );
-
-    // Should complete without error (set_time_limit(0) is called inside handle)
-    $job->handle($arbolService);
-
-    expect($arbolService->getDataFromCache($section))->not->toBeNull();
-    expect($arbolService->getIsRunning($section))->toBeFalse();
-});
-
-/*
-|--------------------------------------------------------------------------
 | Fix 3: Controller dispatches job for chart formats when raw cache
 |         exists but formatted cache is missing
 |--------------------------------------------------------------------------
