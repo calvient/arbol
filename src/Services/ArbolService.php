@@ -63,7 +63,17 @@ class ArbolService
 
     public function storeDataInCache(ArbolSection $arbolSection, mixed $data): void
     {
-        Cache::put("arbol:section:{$arbolSection->id}", json_encode($data), now()->addDays(14));
+        // Ensure group keys are preserved through the JSON round-trip.
+        // When groupBy produces numeric keys (e.g. location IDs like 24, 161),
+        // json_encode may produce a JSON array instead of an object, losing the keys.
+        // Re-keying with string-cast keys forces JSON to produce an object.
+        $dataArray = $data instanceof \Illuminate\Support\Collection ? $data->toArray() : $data;
+        $preserved = [];
+        foreach ($dataArray as $key => $value) {
+            $preserved[(string) $key] = $value;
+        }
+
+        Cache::put("arbol:section:{$arbolSection->id}", json_encode((object) $preserved), now()->addDays(14));
     }
 
     public function storeFormattedDataInCache(ArbolSection $arbolSection, mixed $data): void

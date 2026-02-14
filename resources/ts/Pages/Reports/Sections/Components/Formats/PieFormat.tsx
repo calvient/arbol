@@ -1,5 +1,7 @@
 import {Box} from '@calvient/decal';
 import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts';
+import {extractTruncationMeta} from '../../../../../Utils/chartTruncation';
+import TruncationWarning from './TruncationWarning';
 
 interface PieFormatProps {
   data: Array<{name: string; value: number}>;
@@ -35,28 +37,33 @@ const renderCustomLabel = (props: any) => {
 };
 
 const PieFormat = ({data}: PieFormatProps) => {
+  const {chartData, meta} = extractTruncationMeta(data);
+
   return (
-    <Box mt={4} w={'full'} h={'400px'}>
-      <ResponsiveContainer width='100%' height='100%'>
-        <PieChart width={400} height={400}>
-          <Legend layout='vertical' verticalAlign='middle' align='right' />
-          <Tooltip />
-          <Pie
-            data={data}
-            dataKey='value'
-            cx='40%'
-            cy='50%'
-            outerRadius={120}
-            fill='#8884d8'
-            label={renderCustomLabel}
-          >
-            {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-    </Box>
+    <>
+      {meta.isTruncated && <TruncationWarning total={meta.total} shown={meta.shown} />}
+      <Box mt={4} w={'full'} h={'400px'}>
+        <ResponsiveContainer width='100%' height='100%'>
+          <PieChart width={400} height={400}>
+            <Legend layout='vertical' verticalAlign='middle' align='right' />
+            <Tooltip />
+            <Pie
+              data={chartData}
+              dataKey='value'
+              cx='40%'
+              cy='50%'
+              outerRadius={120}
+              fill='#8884d8'
+              label={renderCustomLabel}
+            >
+              {chartData.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </Box>
+    </>
   );
 };
 

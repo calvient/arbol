@@ -79,10 +79,39 @@ class SeriesController extends Controller
                 $data = ['No data found' => []];
             }
 
+            // For chart formats, raw cache exists but formatted cache is missing.
+            // Dispatch a job to format in the background instead of blocking the web thread.
+            if (in_array(request('format'), ['line', 'bar', 'pie'])) {
+                if (! $this->isCurrentlyRunning()) {
+                    LoadSectionData::dispatch(
+                        arbolSection: $section,
+                        series: request('series'),
+                        filters: request('filters', []),
+                        slice: request('format') === 'line' || request('format') === 'bar'
+                            ? request('xaxis_slice')
+                            : request('slice'),
+                        user: auth()->user(),
+                        format: request('format'),
+                        aggregator: request('aggregator', 'Default'),
+                        chartSlice: request('slice'),
+                        percentageMode: request('percentage_mode'),
+                    );
+                }
+
+                return response()->json(
+                    [
+                        'message' => 'We are currently processing your request. Please try again in a few seconds.',
+                        'estimated_time' => $this->arbolService->getLastRunDuration(
+                            arbolSection: $section,
+                        ) ?? 300,
+                    ],
+                    202,
+                );
+            }
+
+            // Table format is cheap to return inline
             $formattedData = match (request('format')) {
                 'table' => $this->formatForTable($data),
-                'line', 'bar' => $this->formatForChart($data, request('slice'), request('aggregator'), request('percentage_mode')),
-                'pie' => $this->formatForPie($data),
                 default => abort(400, 'Invalid format parameter'),
             };
 
@@ -179,14 +208,32 @@ class SeriesController extends Controller
 
     private function formatForChart(array $data, string $slice = '', string $aggregator = 'Default', ?string $percentageMode = null): array
     {
-        $formattedData = collect($data)
-            ->map(function ($rows, $key) use ($slice, $aggregator, $data) {
-                $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
-                $series = new $seriesInfo['class'];
-                $slices = $series->slices();
-                $aggregators = $series->aggregators();
-                $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];
+        $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
+        $series = new $seriesInfo['class'];
+        $slices = $series->slices();
+        $aggregators = $series->aggregators();
+        $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];
 
+        // Compute all unique slice values ONCE before the loop (O(N) instead of O(N*M))
+        $allSliceValues = [];
+        if ($slice && $slice !== 'All' && $slice !== 'None' && $slice !== 'null' && isset($slices[$slice])) {
+            $allSliceValues = collect($data)
+                ->flatMap(function ($rows) use ($slices, $slice) {
+                    $isArray = is_array($rows[0] ?? null);
+
+                    return collect($isArray ? $rows : [$rows])
+                        ->filter(fn ($row) => count($row) > 0)
+                        ->map(fn ($row) => $slices[$slice]($row))
+                        ->unique()
+                        ->values();
+                })
+                ->unique()
+                ->values()
+                ->toArray();
+        }
+
+        $formattedData = collect($data)
+            ->map(function ($rows, $key) use ($slice, $aggregatorFn, $slices, $allSliceValues) {
                 if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null' || ! isset($slices[$slice])) {
                     return [
                         'name' => $key,
@@ -195,21 +242,6 @@ class SeriesController extends Controller
                 }
 
                 $isArray = is_array($rows[0] ?? null);
-
-                // Get all possible slice values from the current rows
-                $allSliceValues = collect($data)
-                    ->flatMap(function ($rows) use ($slices, $slice) {
-                        $isArray = is_array($rows[0] ?? null);
-
-                        return collect($isArray ? $rows : [$rows])
-                            ->filter(fn ($row) => count($row) > 0)
-                            ->map(fn ($row) => $slices[$slice]($row))
-                            ->unique()
-                            ->values();
-                    })
-                    ->unique()
-                    ->values()
-                    ->toArray();
 
                 // Get the count for each slice key
                 $totals = collect($isArray ? $rows : [$rows])

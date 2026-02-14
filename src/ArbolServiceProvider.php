@@ -2,6 +2,7 @@
 
 namespace Calvient\Arbol;
 
+use Calvient\Arbol\Commands\BenchmarkFormatting;
 use Calvient\Arbol\Commands\ClearArbolCache;
 use Calvient\Arbol\Commands\MakeArbolSeries;
 use Calvient\Arbol\Contracts\ArbolAccess;
@@ -28,7 +29,8 @@ class ArbolServiceProvider extends PackageServiceProvider
             ->hasMigration('add_team_ids_to_arbol_reports_table')
             ->hasMigration('add_percentage_mode_to_arbol_sections_table')
             ->hasCommand(MakeArbolSeries::class)
-            ->hasCommand(ClearArbolCache::class);
+            ->hasCommand(ClearArbolCache::class)
+            ->hasCommand(BenchmarkFormatting::class);
     }
 
     public function bootingPackage(): void

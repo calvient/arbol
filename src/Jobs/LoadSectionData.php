@@ -39,7 +39,7 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
 
     public function handle(ArbolService $arbolService): void
     {
-        // Increase memory limit for this job only, because we might be loading a lot of data
+        // Increase memory limit for large dataset processing
         ini_set('memory_limit', '2G');
 
         try {
@@ -103,7 +103,7 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         }
 
         // Store the run time in cache in seconds
-        $arbolService->setLastRunDuration($this->arbolSection, $seconds);
+        $arbolService->setLastRunDuration($this->arbolSection, (int) round($seconds));
 
         // Set the semaphore to indicate that the job is no longer running
         $arbolService->setIsRunning($this->arbolSection, false);
@@ -148,7 +148,33 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
             $formatted = $this->applyPercentageMode($formatted);
         }
 
+        // Apply chart group truncation to prevent browser overload
+        if ($this->format !== 'table') {
+            $formatted = $this->truncateChartData($formatted);
+        }
+
         return $formatted;
+    }
+
+    protected function truncateChartData(array $data): array
+    {
+        $maxGroups = config('arbol.max_chart_groups');
+
+        if (! $maxGroups || count($data) <= $maxGroups) {
+            return $data;
+        }
+
+        $totalCount = count($data);
+        $truncated = array_slice($data, 0, $maxGroups);
+
+        // Append a metadata marker that the frontend can detect
+        $truncated[] = [
+            '_meta' => 'truncated',
+            '_total' => $totalCount,
+            '_shown' => $maxGroups,
+        ];
+
+        return $truncated;
     }
 
     protected function applyPercentageMode(array $data): array
@@ -219,8 +245,26 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         $aggregatorFn = $aggregators[$this->aggregator] ?? $aggregators['Default'];
         $slice = $this->chartSlice;
 
+        // Compute all unique slice values ONCE before the loop (O(N) instead of O(N*M))
+        $allSliceValues = [];
+        if ($slice && $slice !== 'All' && $slice !== 'None' && $slice !== 'null' && isset($slices[$slice])) {
+            $allSliceValues = collect($data)
+                ->flatMap(function ($rows) use ($slices, $slice) {
+                    $isArray = is_array($rows[0] ?? null);
+
+                    return collect($isArray ? $rows : [$rows])
+                        ->filter(fn ($row) => count($row) > 0)
+                        ->map(fn ($row) => $slices[$slice]($row))
+                        ->unique()
+                        ->values();
+                })
+                ->unique()
+                ->values()
+                ->toArray();
+        }
+
         return collect($data)
-            ->map(function ($rows, $key) use ($slice, $aggregatorFn, $slices, $data) {
+            ->map(function ($rows, $key) use ($slice, $aggregatorFn, $slices, $allSliceValues) {
                 if (! $slice || $slice === 'All' || $slice === 'None' || $slice === 'null' || ! isset($slices[$slice])) {
                     return [
                         'name' => $key,
@@ -229,21 +273,6 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
                 }
 
                 $isArray = is_array($rows[0] ?? null);
-
-                // Get all possible slice values from the current rows
-                $allSliceValues = collect($data)
-                    ->flatMap(function ($rows) use ($slices, $slice) {
-                        $isArray = is_array($rows[0] ?? null);
-
-                        return collect($isArray ? $rows : [$rows])
-                            ->filter(fn ($row) => count($row) > 0)
-                            ->map(fn ($row) => $slices[$slice]($row))
-                            ->unique()
-                            ->values();
-                    })
-                    ->unique()
-                    ->values()
-                    ->toArray();
 
                 // Get the count for each slice key
                 $totals = collect($isArray ? $rows : [$rows])
