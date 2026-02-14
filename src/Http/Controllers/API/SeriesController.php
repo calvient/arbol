@@ -383,6 +383,9 @@ class SeriesController extends Controller
         // Output to a csv and return it as a download
         $csv = fopen('php://temp', 'r+');
 
+        // Write UTF-8 BOM so Excel correctly interprets encoding
+        fwrite($csv, "\xEF\xBB\xBF");
+
         // Write the column headers
         $columnHeaders = [];
         foreach ($data as $row) {
@@ -393,7 +396,7 @@ class SeriesController extends Controller
             }
         }
 
-        fputcsv($csv, $columnHeaders);
+        fputcsv($csv, $columnHeaders, ',', '"', '');
 
         // Write the data to the csv
         foreach ($data as $row) {
@@ -405,7 +408,7 @@ class SeriesController extends Controller
                 }
                 $rowData[] = $value;
             }
-            fputcsv($csv, $rowData);
+            fputcsv($csv, $rowData, ',', '"', '');
         }
 
         // Rewind the file pointer, in order to read the file
