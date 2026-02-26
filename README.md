@@ -250,6 +250,15 @@ Reports are accessible at `/arbol` in your application. Users can:
 - Share reports with other users or make them public
 - Download data as CSV
 
+## Documentation
+
+For deeper technical documentation, see the `resources/docs/` directory:
+
+- [Architecture Deep Dive](resources/docs/architecture.md) — full system architecture, data pipeline, caching, and frontend details
+- [Table Sections vs Chart Sections](resources/docs/table-sections.md) — how table sections drive the report filter bar
+- [Stateless Section View](resources/docs/stateless-section.md) — standalone URL-driven table view without saved reports
+- [Embeddable Section Component](resources/docs/embeddable-section.md) — plan for embedding sections in consumer apps
+
 ## Testing
 
 ```bash

@@ -61,7 +61,31 @@ class ArbolService
         return null;
     }
 
-    public function storeDataInCache(ArbolSection $arbolSection, mixed $data): void
+    /**
+     * Compute a stable hash from a filters array for use in cache keys.
+     */
+    public static function computeFilterHash(array $filters): string
+    {
+        // Sort filters to ensure consistent hashing regardless of order
+        $normalized = collect($filters)
+            ->sortBy(fn ($f) => ($f['field'] ?? '') . ':' . ($f['value'] ?? ''))
+            ->values()
+            ->toArray();
+
+        return md5(json_encode($normalized));
+    }
+
+    /**
+     * Build the cache key prefix for a section, optionally scoped by filter hash.
+     */
+    private function cacheKey(ArbolSection $arbolSection, ?string $filterHash = null): string
+    {
+        $base = "arbol:section:{$arbolSection->id}";
+
+        return $filterHash ? "{$base}:fh:{$filterHash}" : $base;
+    }
+
+    public function storeDataInCache(ArbolSection $arbolSection, mixed $data, ?string $filterHash = null): void
     {
         // Ensure group keys are preserved through the JSON round-trip.
         // When groupBy produces numeric keys (e.g. location IDs like 24, 161),
@@ -73,55 +97,123 @@ class ArbolService
             $preserved[(string) $key] = $value;
         }
 
-        Cache::put("arbol:section:{$arbolSection->id}", json_encode((object) $preserved), now()->addDays(14));
+        Cache::put($this->cacheKey($arbolSection, $filterHash), json_encode((object) $preserved), now()->addDays(14));
     }
 
-    public function storeFormattedDataInCache(ArbolSection $arbolSection, mixed $data): void
+    public function storeFormattedDataInCache(ArbolSection $arbolSection, mixed $data, ?string $filterHash = null): void
     {
-        Cache::put("arbol:section:{$arbolSection->id}:formatted", json_encode($data), now()->addDays(14));
+        Cache::put($this->cacheKey($arbolSection, $filterHash) . ':formatted', json_encode($data), now()->addDays(14));
     }
 
-    public function getDataFromCache(ArbolSection $arbolSection): mixed
+    public function getDataFromCache(ArbolSection $arbolSection, ?string $filterHash = null): mixed
     {
-        $data = Cache::get("arbol:section:{$arbolSection->id}");
+        $data = Cache::get($this->cacheKey($arbolSection, $filterHash));
 
         return $data ? json_decode($data, true) : null;
     }
 
-    public function getFormattedDataFromCache(ArbolSection $arbolSection): mixed
+    public function getFormattedDataFromCache(ArbolSection $arbolSection, ?string $filterHash = null): mixed
     {
-        $data = Cache::get("arbol:section:{$arbolSection->id}:formatted");
+        $data = Cache::get($this->cacheKey($arbolSection, $filterHash) . ':formatted');
 
         return $data ? json_decode($data, true) : null;
     }
 
-    public function setIsRunning(ArbolSection $arbolSection, bool $flag)
+    public function setIsRunning(ArbolSection $arbolSection, bool $flag, ?string $filterHash = null)
     {
-        Cache::put("arbol:section:{$arbolSection->id}:is_running", $flag, now()->addMinutes(30));
+        Cache::put($this->cacheKey($arbolSection, $filterHash) . ':is_running', $flag, now()->addMinutes(30));
     }
 
-    public function getIsRunning(ArbolSection $arbolSection): bool
+    public function getIsRunning(ArbolSection $arbolSection, ?string $filterHash = null): bool
     {
-        return Cache::get("arbol:section:{$arbolSection->id}:is_running") ?? false;
+        return Cache::get($this->cacheKey($arbolSection, $filterHash) . ':is_running') ?? false;
     }
 
-    public function setLastRunDuration(ArbolSection $arbolSection, int $duration): void
+    public function setLastRunDuration(ArbolSection $arbolSection, int $duration, ?string $filterHash = null): void
     {
-        Cache::put("arbol:section:{$arbolSection->id}:last_run_duration", $duration, now()->addDays(14));
+        Cache::put($this->cacheKey($arbolSection, $filterHash) . ':last_run_duration', $duration, now()->addDays(14));
     }
 
-    public function getLastRunDuration(ArbolSection $arbolSection): ?int
+    public function getLastRunDuration(ArbolSection $arbolSection, ?string $filterHash = null): ?int
     {
-        return Cache::get("arbol:section:{$arbolSection->id}:last_run_duration");
+        return Cache::get($this->cacheKey($arbolSection, $filterHash) . ':last_run_duration');
     }
 
-    public function clearCacheForSection(ArbolSection $arbolSection): void
+    public function clearCacheForSection(ArbolSection $arbolSection, ?string $filterHash = null): void
     {
-        Cache::forget("arbol:section:{$arbolSection->id}");
-        Cache::forget("arbol:section:{$arbolSection->id}:formatted");
-        Cache::forget("arbol:section:{$arbolSection->id}:last_kicked_off");
-        Cache::forget("arbol:section:{$arbolSection->id}:is_running");
-        Cache::forget("arbol:section:{$arbolSection->id}:last_run_duration");
+        $key = $this->cacheKey($arbolSection, $filterHash);
+        Cache::forget($key);
+        Cache::forget("{$key}:formatted");
+        Cache::forget("{$key}:last_kicked_off");
+        Cache::forget("{$key}:is_running");
+        Cache::forget("{$key}:last_run_duration");
+    }
+
+    // --- Hash-based cache methods for stateless (no section_id) usage ---
+
+    /**
+     * Build a cache key for stateless section access using a config hash.
+     */
+    public function hashCacheKey(string $configHash, ?string $filterHash = null): string
+    {
+        $base = "arbol:stateless:{$configHash}";
+
+        return $filterHash ? "{$base}:fh:{$filterHash}" : $base;
+    }
+
+    public function storeDataInCacheByHash(string $configHash, mixed $data, ?string $filterHash = null): void
+    {
+        $dataArray = $data instanceof \Illuminate\Support\Collection ? $data->toArray() : $data;
+        $preserved = [];
+        foreach ($dataArray as $key => $value) {
+            $preserved[(string) $key] = $value;
+        }
+
+        Cache::put($this->hashCacheKey($configHash, $filterHash), json_encode((object) $preserved), now()->addDays(14));
+    }
+
+    public function getDataFromCacheByHash(string $configHash, ?string $filterHash = null): mixed
+    {
+        $data = Cache::get($this->hashCacheKey($configHash, $filterHash));
+
+        return $data ? json_decode($data, true) : null;
+    }
+
+    public function setIsRunningByHash(string $configHash, bool $flag, ?string $filterHash = null): void
+    {
+        Cache::put($this->hashCacheKey($configHash, $filterHash) . ':is_running', $flag, now()->addMinutes(30));
+    }
+
+    public function getIsRunningByHash(string $configHash, ?string $filterHash = null): bool
+    {
+        return Cache::get($this->hashCacheKey($configHash, $filterHash) . ':is_running') ?? false;
+    }
+
+    public function setLastRunDurationByHash(string $configHash, int $duration, ?string $filterHash = null): void
+    {
+        Cache::put($this->hashCacheKey($configHash, $filterHash) . ':last_run_duration', $duration, now()->addDays(14));
+    }
+
+    public function getLastRunDurationByHash(string $configHash, ?string $filterHash = null): ?int
+    {
+        return Cache::get($this->hashCacheKey($configHash, $filterHash) . ':last_run_duration');
+    }
+
+    public function clearCacheByHash(string $configHash, ?string $filterHash = null): void
+    {
+        $key = $this->hashCacheKey($configHash, $filterHash);
+        Cache::forget($key);
+        Cache::forget("{$key}:formatted");
+        Cache::forget("{$key}:is_running");
+        Cache::forget("{$key}:last_run_duration");
+    }
+
+    /**
+     * Compute a stable config hash for stateless section access.
+     */
+    public static function computeConfigHash(string $series, string $format = 'table'): string
+    {
+        return md5(json_encode(['series' => $series, 'format' => $format]));
     }
 
     /**

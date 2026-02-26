@@ -4,6 +4,7 @@ namespace Calvient\Arbol\Http\Controllers;
 
 use Calvient\Arbol\Contracts\ArbolAccess;
 use Calvient\Arbol\Models\ArbolReport;
+use Calvient\Arbol\Services\ArbolService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -11,7 +12,7 @@ use Inertia\Response;
 
 class ReportsController extends Controller
 {
-    public function __construct(private ArbolAccess $arbolAccess) {}
+    public function __construct(private ArbolAccess $arbolAccess, private ArbolService $arbolService) {}
 
     public function index(): Response
     {
@@ -35,14 +36,54 @@ class ReportsController extends Controller
             abort(403);
         }
 
+        $report->load([
+            'author:id,name',
+            'sections' => function ($query) {
+                $query->orderBy('sequence');
+            },
+        ]);
+
+        // Collect report filter configuration from table sections
+        // Table sections' filters define which filter groups appear in the report filter bar
+        $allFilters = [];
+        $defaultFilters = [];
+
+        foreach ($report->sections as $section) {
+            if ($section->format !== 'table') {
+                continue;
+            }
+
+            $seriesData = $this->arbolService->getSeriesByName($section->series);
+            if (! $seriesData || empty($seriesData['filters'])) {
+                continue;
+            }
+
+            foreach ($section->filters ?? [] as $filter) {
+                $group = $filter['field'] ?? null;
+                if (! $group || ! isset($seriesData['filters'][$group])) {
+                    continue;
+                }
+
+                // Add available values for this filter group
+                if (! isset($allFilters[$group])) {
+                    $allFilters[$group] = [];
+                }
+                $allFilters[$group] = array_values(array_unique(
+                    array_merge($allFilters[$group], $seriesData['filters'][$group])
+                ));
+
+                // If a default value is set, collect it
+                if (! empty($filter['value'])) {
+                    $defaultFilters[] = ['field' => $group, 'value' => $filter['value']];
+                }
+            }
+        }
+
         return Inertia::render('Reports/Show', [
-            'report' => $report->load([
-                'author:id,name',
-                'sections' => function ($query) {
-                    $query->orderBy('sequence');
-                },
-            ]),
+            'report' => $report,
             'users' => $report->users()->pluck('name', 'id')->toArray(),
+            'allFilters' => $allFilters,
+            'defaultFilters' => $defaultFilters,
         ]);
     }
 

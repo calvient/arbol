@@ -107,17 +107,18 @@ const Create = ({report, series}: Props) => {
         </FormControl>
 
         {data.series.length > 0 && selectedSeries && (
-          <HStack w={'full'} alignItems={'flex-start'}>
+          <>
             {Object.keys(selectedSeries.filters).length > 0 && (
               <AddFilters
                 allFilters={selectedSeries.filters}
                 selectedFilters={data.filters}
                 onFiltersChange={(filters) => setData('filters', filters)}
+                tableMode={data.format === 'table'}
               />
             )}
 
-            {selectedSeries.slices.length > 0 && (
-              <>
+            {selectedSeries.slices.length > 0 && data.format !== 'table' && (
+              <HStack w={'full'} alignItems={'flex-start'}>
                 {['line', 'bar', 'pie'].includes(data.format) && (
                   <>
                     <FormControl flex={1}>
@@ -194,9 +195,9 @@ const Create = ({report, series}: Props) => {
                     </VStack>
                   </RadioGroup>
                 </FormControl>
-              </>
+              </HStack>
             )}
-          </HStack>
+          </>
         )}
         <Button type={'submit'} isLoading={processing} colorScheme={'blue'}>
           Add Section to Report

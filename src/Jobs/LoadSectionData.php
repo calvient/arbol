@@ -35,6 +35,7 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         public string $aggregator = 'Default',
         public ?string $chartSlice = null,
         public ?string $percentageMode = null,
+        public ?string $filterHash = null,
     ) {}
 
     public function handle(ArbolService $arbolService): void
@@ -43,11 +44,11 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         ini_set('memory_limit', '2G');
 
         try {
-            $arbolService->setIsRunning($this->arbolSection, true);
+            $arbolService->setIsRunning($this->arbolSection, true, $this->filterHash);
 
             $this->loadData($arbolService);
         } catch (\Exception $e) {
-            $arbolService->setIsRunning($this->arbolSection, false);
+            $arbolService->setIsRunning($this->arbolSection, false, $this->filterHash);
             logger()->error($e->getMessage());
 
             // Let the exception bubble up so that the job can be retried
@@ -78,7 +79,7 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
             $data = collect($seriesInstance->data($arbolBag, $this->user));
             $data = $this->slice ? $this->applySlice($data, $seriesInstance) : $data->groupBy(fn () => 'All');
         } catch (\Exception $e) {
-            $arbolService->setIsRunning($this->arbolSection, false);
+            $arbolService->setIsRunning($this->arbolSection, false, $this->filterHash);
             logger()->error('ARBOL ERROR: '.$e->getMessage());
 
             return;
@@ -92,21 +93,19 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         logger()->info("Data for section {$this->arbolSection->name} loaded");
 
         // Store raw data in cache (for table format and downloads)
-        $arbolService->storeDataInCache($this->arbolSection, $data);
+        $arbolService->storeDataInCache($this->arbolSection, $data, $this->filterHash);
         logger()->info("Data for section {$this->arbolSection->name} raw data stored");
 
         // Format and store formatted data for charts (to avoid expensive formatting on each request)
         if ($this->format !== 'table') {
             $formattedData = $this->formatData($data->toArray(), $seriesInstance);
-            $arbolService->storeFormattedDataInCache($this->arbolSection, $formattedData);
+            $arbolService->storeFormattedDataInCache($this->arbolSection, $formattedData, $this->filterHash);
             logger()->info("Data for section {$this->arbolSection->name} formatted data stored");
         }
 
         // Store the run time in cache in seconds
-        $arbolService->setLastRunDuration($this->arbolSection, (int) round($seconds));
-
-        // Set the semaphore to indicate that the job is no longer running
-        $arbolService->setIsRunning($this->arbolSection, false);
+        $arbolService->setLastRunDuration($this->arbolSection, (int) round($seconds), $this->filterHash);
+        $arbolService->setIsRunning($this->arbolSection, false, $this->filterHash);
     }
 
     protected function createArbolBag(): ArbolBag
@@ -334,6 +333,9 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
         // Round current timestamp down to nearest 5 minutes for id uniqueness
         $timestamp = intdiv(now()->timestamp, 300) * 300;
 
-        return "{$this->arbolSection->id}_{$timestamp}";
+        $base = "{$this->arbolSection->id}_{$timestamp}";
+
+        // Include filter hash so different filter combinations don't collide
+        return $this->filterHash ? "{$base}_{$this->filterHash}" : $base;
     }
 }

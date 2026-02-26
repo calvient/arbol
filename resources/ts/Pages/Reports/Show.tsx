@@ -1,17 +1,32 @@
 import Layout from '../../Components/Layout.tsx';
 import {Head, Link} from '@inertiajs/react';
-import React from 'react';
+import React, {useCallback, useState} from 'react';
 import {User} from '../../Types/User.ts';
 import {Report} from '../../Types/Report.ts';
 import {AddIcon, Box, Center, HStack, Heading, Spacer, Text, VStack, Button} from '@calvient/decal';
 import ReportSection from './Sections/Components/ReportSection.tsx';
+import ReportFilterBar from '../../Components/ReportFilterBar.tsx';
 
 interface ShowProps {
   report: Report;
   users: User[];
+  allFilters: Record<string, string[]>;
+  defaultFilters?: Array<{field: string; value: string}>;
 }
 
-const Show = ({report}: ShowProps) => {
+const Show = ({report, allFilters, defaultFilters = []}: ShowProps) => {
+  const [reportFilters, setReportFilters] = useState<Array<{field: string; value: string}>>(defaultFilters);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [loadingSections, setLoadingSections] = useState<Record<number, boolean>>({});
+
+  const hasFilters = Object.keys(allFilters).length > 0;
+  const isAnyLoading = Object.values(loadingSections).some(Boolean);
+
+  const handleSectionLoading = useCallback((sectionId: number, loading: boolean) => {
+    setLoadingSections((prev) => ({...prev, [sectionId]: loading}));
+  }, []);
+
   return (
     <>
       <Head title={report.name} />
@@ -26,10 +41,33 @@ const Show = ({report}: ShowProps) => {
         <Text fontSize={'sm'}>{report.description}</Text>
       </Box>
 
-      <Box mt={8}>
+      {hasFilters && (
+        <Box mt={4}>
+          <ReportFilterBar
+            allFilters={allFilters}
+            selectedFilters={reportFilters}
+            onFiltersChange={setReportFilters}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onRefresh={() => setRefreshKey((k) => k + 1)}
+            isLoading={isAnyLoading}
+          />
+        </Box>
+      )}
+
+      <Box mt={hasFilters ? 4 : 8}>
         <VStack spacing={4}>
           {report.sections.map((section) => (
-            <ReportSection key={section.id} section={section} report={report} />
+            <ReportSection
+              key={section.id}
+              section={section}
+              report={report}
+              reportFilters={reportFilters}
+              searchQuery={searchQuery}
+              refreshKey={refreshKey}
+              onLoadingChange={handleSectionLoading}
+              hasFilterBar={hasFilters}
+            />
           ))}
 
           <Center

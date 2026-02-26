@@ -23,9 +23,10 @@ interface AddFiltersProps {
   allFilters: Record<string, string[]>;
   selectedFilters: Array<{field: string; value: string}>;
   onFiltersChange: (filters: Array<{field: string; value: string}>) => void;
+  tableMode?: boolean;
 }
 
-const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFiltersChange}) => {
+const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFiltersChange, tableMode = false}) => {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [filterToAdd, setFilterToAdd] = useState<string | undefined>();
   const [filterValueToAdd, setFilterValueToAdd] = useState<string | undefined>();
@@ -38,14 +39,35 @@ const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFilters
     onFiltersChange(selectedFilters.filter((_, i) => i !== index));
   };
 
+  // In table mode, only show filter groups not already added
+  const availableFilterGroups = tableMode
+    ? Object.keys(allFilters).filter(
+        (group) => !selectedFilters.some((f) => f.field === group),
+      )
+    : Object.keys(allFilters);
+
+  // In table mode, the add button only requires a group (value is optional)
+  const canAdd = tableMode ? !!filterToAdd : !!filterToAdd && !!filterValueToAdd;
+
   return (
     <FormControl flex={2}>
-      <FormLabel>Filters:</FormLabel>
+      <FormLabel>{tableMode ? 'Report Filters:' : 'Filters:'}</FormLabel>
+      {tableMode && (
+        <Text fontSize='xs' color='gray.500' mb={2}>
+          Choose which filters appear on the report. Optionally set a default value.
+        </Text>
+      )}
 
       <Wrap>
         {selectedFilters.map((filter, index) => (
           <WrapItem key={index} px={4} py={2} bgColor={'gray.100'} borderRadius={'full'}>
-            <Text fontSize={'sm'}>{filter.value}</Text>
+            <Text fontSize={'sm'}>
+              {tableMode
+                ? filter.value
+                  ? `${filter.field}: ${filter.value}`
+                  : filter.field
+                : filter.value}
+            </Text>
             <IconButton
               aria-label={'Remove'}
               icon={<CloseIcon />}
@@ -72,6 +94,7 @@ const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFilters
                 size={'md'}
                 borderRadius={'full'}
                 onClick={() => setPopoverOpen(true)}
+                isDisabled={tableMode && availableFilterGroups.length === 0}
               >
                 Add Filter
               </Button>
@@ -79,13 +102,16 @@ const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFilters
             <PopoverContent boxShadow={'lg'}>
               <PopoverArrow />
               <PopoverCloseButton />
-              <PopoverHeader>Add a Filter</PopoverHeader>
+              <PopoverHeader>{tableMode ? 'Add a Report Filter' : 'Add a Filter'}</PopoverHeader>
               <PopoverBody py={4}>
                 <Select
                   placeholder={'Select a filter'}
-                  onChange={(e) => setFilterToAdd(e.target.value)}
+                  onChange={(e) => {
+                    setFilterToAdd(e.target.value);
+                    setFilterValueToAdd(undefined);
+                  }}
                 >
-                  {Object.keys(allFilters).map((filter) => (
+                  {availableFilterGroups.map((filter) => (
                     <option key={filter} value={filter}>
                       {filter}
                     </option>
@@ -94,9 +120,9 @@ const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFilters
                 <Select
                   mt={4}
                   isDisabled={!filterToAdd}
-                  placeholder={'Select a value'}
-                  value={filterValueToAdd}
-                  onChange={(e) => setFilterValueToAdd(e.target.value)}
+                  placeholder={tableMode ? 'No default (optional)' : 'Select a value'}
+                  value={filterValueToAdd ?? ''}
+                  onChange={(e) => setFilterValueToAdd(e.target.value || undefined)}
                 >
                   {filterToAdd &&
                     allFilters[filterToAdd].map((value) => (
@@ -106,14 +132,14 @@ const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFilters
                     ))}
                 </Select>
                 <Button
-                  isDisabled={!filterToAdd || !filterValueToAdd}
+                  isDisabled={!canAdd}
                   w={'full'}
                   mt={4}
                   colorScheme={'blue'}
                   onClick={() => {
+                    handleAddFilter(filterToAdd ?? '', filterValueToAdd ?? '');
                     setFilterToAdd(undefined);
                     setFilterValueToAdd(undefined);
-                    handleAddFilter(filterToAdd ?? '', filterValueToAdd ?? '');
                     setPopoverOpen(false);
                   }}
                 >
