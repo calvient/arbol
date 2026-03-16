@@ -1,9 +1,9 @@
 import MinimalLayout from '../../Components/MinimalLayout.tsx';
 import {Head} from '@inertiajs/react';
 import React, {useCallback, useEffect, useState} from 'react';
-import {Box, Button, Heading, HStack, Link as ChakraLink, Spacer, Text} from '@calvient/decal';
+import {Box, Button, Heading, Text} from '@calvient/decal';
 import {toQueryString} from '../../Utils/toQueryString.ts';
-import TableFormat from '../Reports/Sections/Components/Formats/TableFormat.tsx';
+import DataTableContainer from '../../Components/DataTableContainer.tsx';
 import ReportFilterBar from '../../Components/ReportFilterBar.tsx';
 
 interface ShowProps {
@@ -72,8 +72,8 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
         setData(result);
         if (result && typeof result === 'object' && !Array.isArray(result)) {
           const keys = Object.keys(result);
-          if (keys.length > 0 && !currentSlice) {
-            setCurrentSlice(keys[0]);
+          if (keys.length > 0) {
+            setCurrentSlice((prev) => prev && keys.includes(prev) ? prev : keys[0]);
           }
         }
         setIsLoading(false);
@@ -83,7 +83,7 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
         setTimeout(() => loadData(), 10000);
       }
     },
-    [series, reportFilters, currentSlice],
+    [series, reportFilters],
   );
 
   useEffect(() => {
@@ -95,8 +95,7 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [refreshKey, loadData]);
 
   return (
     <>
@@ -117,49 +116,51 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
         </Box>
       )}
 
-      <Box mt={4} w={'full'} p={4} border={'solid 1px'} borderColor={'gray.200'} borderRadius={'md'}>
-        {isLoading || !data ? (
-          <Box>
-            <Text>Loading data...</Text>
-            {estimatedTime - timeElapsed > 0 && (
-              <Text>Estimated time remaining: {estimatedTime - timeElapsed} second(s)</Text>
-            )}
-            {estimatedTime - timeElapsed < 0 && (
-              <>
-                <Text>This is taking longer than expected...</Text>
-                <Button mt={4} size={'xs'} colorScheme={'red'} onClick={() => loadData(true)}>
-                  Force Refresh
-                </Button>
-              </>
-            )}
-          </Box>
-        ) : (
-          <>
-            <HStack spacing={2}>
-              <Spacer />
-              <Button
-                target='_blank'
-                as={ChakraLink}
-                href={`/arbol/section-data/download?${toQueryString({
+      {/* Data table container: always visible in stateless view; shows loading state until data is ready */}
+      <Box mt={4} w={'full'} data-region="data-table">
+        <DataTableContainer
+          data={data ?? { All: [] }}
+          currentSlice={currentSlice}
+          onSliceChange={setCurrentSlice}
+          searchQuery={searchQuery}
+          hideSliceSelector={true}
+          isLoading={isLoading}
+          onRefresh={() => setRefreshKey((k) => k + 1)}
+          downloadCurrentViewUrl={
+            data
+              ? `/arbol/section-data/download?${toQueryString({
                   series,
                   filters: reportFilters,
                   format: 'table',
                   slice_key: currentSlice,
-                })}`}
-                size={'xs'}
-                title='Download current view'
-              >
-                Download
-              </Button>
-            </HStack>
-            <TableFormat
-              data={data}
-              currentSlice={currentSlice}
-              onSliceChange={setCurrentSlice}
-              searchQuery={searchQuery}
-              hideSliceSelector={true}
-            />
-          </>
+                })}`
+              : undefined
+          }
+          exportCsvUrl={
+            data
+              ? `/arbol/section-data/download?${toQueryString({
+                  series,
+                  filters: reportFilters,
+                  format: 'table',
+                  slice_key: currentSlice,
+                })}`
+              : undefined
+          }
+        />
+        {isLoading && estimatedTime - timeElapsed > 0 && (
+          <Box mt={2} px={2}>
+            <Text fontSize="sm" color="gray.500">
+              Estimated time remaining: {estimatedTime - timeElapsed} second(s)
+            </Text>
+          </Box>
+        )}
+        {isLoading && estimatedTime - timeElapsed < 0 && (
+          <Box mt={2} px={2}>
+            <Text fontSize="sm" color="gray.600">This is taking longer than expected.</Text>
+            <Button mt={2} size="xs" colorScheme="red" onClick={() => loadData(true)}>
+              Force Refresh
+            </Button>
+          </Box>
         )}
       </Box>
     </>
