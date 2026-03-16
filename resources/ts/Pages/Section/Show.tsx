@@ -50,7 +50,7 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
     format: 'table',
     force_refresh: 0,
   })}`;
-  const downloadUrl = `/arbol/section-data/download?${toQueryString({
+  const exportCsvUrl = `/arbol/section-data/download?${toQueryString({
     series,
     filters: reportFilters,
     format: 'table',
@@ -84,8 +84,7 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
       <Box mt={4} w={'full'} data-region="data-table">
         <DataTableFromUrl
           dataUrl={dataUrl}
-          downloadUrl={downloadUrl}
-          exportCsvUrl={downloadUrl}
+          exportCsvUrl={exportCsvUrl}
           searchQuery={searchQuery}
           refreshKey={refreshKey}
           onLoadingChange={(loading) => {

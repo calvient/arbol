@@ -688,7 +688,7 @@ type Section = {
 - **Primary table container** used by all Arbol reporting pages (report sections and standalone section view).
 - Lives in its own container region (`data-region="data-table-container"`); table sections render inside a `data-region="data-table"` wrapper.
 - **Sticky column headers**; sortable columns; **column show/hide** via a Columns menu; **pagination** (no infinite scroll).
-- **Top-right toolbar**: Refresh (re-run query), Download current view, Export to CSV, Add to Report (optional hook), and Columns visibility menu.
+- **Top-right toolbar**: Refresh (re-run query), Export to CSV, Add to Report (optional hook), and Columns visibility menu.
 - Exposes **canonical table state** via `onTableStateChange(state)`: `visibleColumns`, `sortBy`, `pageIndex`, `pageSize`, `totalRows`, `currentViewRows`, `allColumns`. Downstream visualizations should consume this state so the table remains the single source of truth.
 
 **Using the table in the parent app:** The table can be reused in different views across the app. Use **`DataTableFromUrl`** from `resources/ts/Embeddable` when you only need to pass the data URL (e.g. the stateless section endpoint); it handles fetching, 202 polling, and loading. Use **`DataTableContainer`** when you already have data and want full control. See `resources/ts/Embeddable/README.md` for setup (Vite alias, props, and examples).

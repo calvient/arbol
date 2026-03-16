@@ -8,9 +8,7 @@ import DataTableContainer, {
 export interface DataTableFromUrlProps {
   /** URL that returns table data (e.g. GET /api/arbol/section-data?series=...&format=table). Must return JSON: Record<string, DataTableRow[]> (e.g. { All: [...] }). */
   dataUrl: string;
-  /** Optional URL for "Download current view" (e.g. GET /arbol/section-data/download?...) */
-  downloadUrl?: string;
-  /** Optional URL for "Export to CSV" (can be same as downloadUrl) */
+  /** Optional URL for "Export to CSV" (e.g. GET /arbol/section-data/download?...) */
   exportCsvUrl?: string;
   /** Optional: callback when table state changes (for downstream visualizations) */
   onTableStateChange?: (state: DataTableState) => void;
@@ -40,13 +38,11 @@ export interface DataTableFromUrlProps {
  * // Stateless Arbol section URL
  * <DataTableFromUrl
  *   dataUrl={`/api/arbol/section-data?${new URLSearchParams({ series: 'My Series', format: 'table' })}`}
- *   downloadUrl={`/arbol/section-data/download?${new URLSearchParams({ series: 'My Series', format: 'table' })}`}
  *   exportCsvUrl={`/arbol/section-data/download?${new URLSearchParams({ series: 'My Series', format: 'table' })}`}
  * />
  */
 const DataTableFromUrl: React.FC<DataTableFromUrlProps> = ({
   dataUrl,
-  downloadUrl,
   exportCsvUrl,
   onTableStateChange,
   onAddToReport,
@@ -137,7 +133,6 @@ const DataTableFromUrl: React.FC<DataTableFromUrlProps> = ({
       hideSliceSelector={true}
       isLoading={isLoading}
       onRefresh={() => loadData(true)}
-      downloadCurrentViewUrl={data ? downloadUrl : undefined}
       exportCsvUrl={data ? exportCsvUrl : undefined}
       onAddToReport={onAddToReport}
       onTableStateChange={onTableStateChange}

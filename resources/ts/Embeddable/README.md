@@ -4,7 +4,7 @@ You can reuse the data table in different views across your app. Two options:
 
 ## 1. **DataTableFromUrl** — just pass the URL
 
-Use when you want a table that fetches its own data from a URL (e.g. the stateless section endpoint). You only need to supply the data URL and optional download/export URLs.
+Use when you want a table that fetches its own data from a URL (e.g. the stateless section endpoint). You supply the data URL and optionally the Export to CSV URL.
 
 **Requirements:** Your app must use React and the same UI stack as Arbol (`@calvient/decal` or Chakra UI). The API must return JSON in the shape `Record<string, Row[]>` (e.g. `{ "All": [ { "col1": "a", "col2": 1 }, ... ] }`). The stateless endpoint `GET /api/arbol/section-data` returns this shape.
 
@@ -32,7 +32,7 @@ const dataUrl = `/api/arbol/section-data?${new URLSearchParams({
   format: 'table',
   // filters: build from your state, e.g. filters[0][field]=X&filters[0][value]=Y
 })}`;
-const downloadUrl = `/arbol/section-data/download?${new URLSearchParams({
+const exportCsvUrl = `/arbol/section-data/download?${new URLSearchParams({
   series: 'My Series',
   format: 'table',
   slice_key: 'All',
@@ -42,8 +42,7 @@ function MyPage() {
   return (
     <DataTableFromUrl
       dataUrl={dataUrl}
-      downloadUrl={downloadUrl}
-      exportCsvUrl={downloadUrl}
+      exportCsvUrl={exportCsvUrl}
     />
   );
 }
@@ -63,7 +62,6 @@ const dataUrl = `/api/arbol/section-data?series=My+Series&format=table&${filters
 | Prop | Required | Description |
 |------|----------|-------------|
 | `dataUrl` | Yes | GET URL that returns `Record<string, DataTableRow[]>` |
-| `downloadUrl` | No | URL for "Download current view" button |
 | `exportCsvUrl` | No | URL for "Export to CSV" button |
 | `onTableStateChange` | No | Callback with current view state (for downstream visualizations) |
 | `onAddToReport` | No | Callback when user clicks "Add to Report" |
@@ -98,7 +96,6 @@ function MyPage() {
       hideSliceSelector
       isLoading={loading}
       onRefresh={() => { /* refetch */ }}
-      downloadCurrentViewUrl="..."
       exportCsvUrl="..."
     />
   );

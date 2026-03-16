@@ -69,9 +69,7 @@ export interface DataTableContainerProps {
   searchQuery?: string;
   /** Re-run query / refresh data */
   onRefresh?: () => void;
-  /** URL for "Download current view" (e.g. CSV for current slice) */
-  downloadCurrentViewUrl?: string;
-  /** URL for "Export to CSV" (can be same as downloadCurrentViewUrl) */
+  /** URL for "Export to CSV" (e.g. current slice / current view as CSV) */
   exportCsvUrl?: string;
   /** Called when user clicks "Add to Report" */
   onAddToReport?: () => void;
@@ -95,7 +93,6 @@ const DataTableContainer: React.FC<DataTableContainerProps> = ({
   hideSliceSelector = false,
   searchQuery = '',
   onRefresh,
-  downloadCurrentViewUrl,
   exportCsvUrl,
   onAddToReport,
   onTableStateChange,
@@ -233,18 +230,6 @@ const DataTableContainer: React.FC<DataTableContainerProps> = ({
           {onRefresh && (
             <Button size="sm" leftIcon={<RepeatIcon />} onClick={onRefresh} colorScheme="blue">
               Refresh
-            </Button>
-          )}
-          {downloadCurrentViewUrl && (
-            <Button
-              size="sm"
-              variant="outline"
-              as={ChakraLink}
-              href={downloadCurrentViewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Download current view
             </Button>
           )}
           {exportCsvUrl && (

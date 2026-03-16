@@ -124,7 +124,7 @@ const ReportSection = ({report, section, reportFilters = [], searchQuery = '', r
     );
   }
 
-  const downloadCurrentViewUrl =
+  const exportCsvUrl =
     section.format === 'table'
       ? `/arbol/series-data/download?${toQueryString({
           section_id: section.id,
@@ -215,8 +215,7 @@ const ReportSection = ({report, section, reportFilters = [], searchQuery = '', r
             searchQuery={searchQuery}
             hideSliceSelector={hasFilterBar}
             onRefresh={() => loadData(true)}
-            downloadCurrentViewUrl={downloadCurrentViewUrl}
-            exportCsvUrl={downloadCurrentViewUrl}
+            exportCsvUrl={exportCsvUrl}
           />
         </Box>
       )}
