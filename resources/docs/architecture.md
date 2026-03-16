@@ -113,6 +113,10 @@ resources/
             BarFormat.tsx          # Recharts bar chart
             PieFormat.tsx          # Recharts pie chart
             TruncationWarning.tsx  # Warning banner for truncated chart data
+    Embeddable/              # Public API for parent app reuse
+      index.ts               # Exports DataTableFromUrl, DataTableContainer + types
+      DataTableFromUrl.tsx   # URL-driven wrapper: pass dataUrl, get table with fetch/polling
+      README.md              # How to use from parent app
 ```
 
 ---
@@ -686,6 +690,8 @@ type Section = {
 - **Sticky column headers**; sortable columns; **column show/hide** via a Columns menu; **pagination** (no infinite scroll).
 - **Top-right toolbar**: Refresh (re-run query), Download current view, Export to CSV, Add to Report (optional hook), and Columns visibility menu.
 - Exposes **canonical table state** via `onTableStateChange(state)`: `visibleColumns`, `sortBy`, `pageIndex`, `pageSize`, `totalRows`, `currentViewRows`, `allColumns`. Downstream visualizations should consume this state so the table remains the single source of truth.
+
+**Using the table in the parent app:** The table can be reused in different views across the app. Use **`DataTableFromUrl`** from `resources/ts/Embeddable` when you only need to pass the data URL (e.g. the stateless section endpoint); it handles fetching, 202 polling, and loading. Use **`DataTableContainer`** when you already have data and want full control. See `resources/ts/Embeddable/README.md` for setup (Vite alias, props, and examples).
 
 ### Table Format (`TableFormat.tsx`)
 - Receives `Record<string, Row[]>` (slice-key to rows). Report table sections use `DataTableContainer` instead for sticky headers, column visibility, toolbar actions, and canonical state. `TableFormat` remains for simpler table-only usage where the full container is not needed.

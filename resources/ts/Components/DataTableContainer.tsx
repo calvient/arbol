@@ -270,12 +270,17 @@ const DataTableContainer: React.FC<DataTableContainerProps> = ({
             </MenuButton>
             <MenuList minW="200px" maxH="320px" overflowY="auto" zIndex={1400}>
               {table.getAllLeafColumns().map((column) => (
-                <MenuItem key={column.id} closeOnSelect={false}>
+                <MenuItem
+                  key={column.id}
+                  closeOnSelect={false}
+                  onClick={() => column.getCanHide() && column.toggleVisibility()}
+                  cursor={column.getCanHide() ? 'pointer' : 'default'}
+                >
                   <Checkbox
                     isChecked={column.getIsVisible()}
                     isDisabled={!column.getCanHide()}
-                    onChange={column.getToggleVisibilityHandler()}
                     size="sm"
+                    pointerEvents="none"
                   >
                     <Text fontSize="sm">
                       {typeof column.columnDef.header === 'string'
