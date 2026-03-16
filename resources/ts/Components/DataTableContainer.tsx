@@ -86,6 +86,7 @@ export interface DataTableContainerProps {
 }
 
 const defaultPageSize = 10;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 const DataTableContainer: React.FC<DataTableContainerProps> = ({
   data,
@@ -267,7 +268,7 @@ const DataTableContainer: React.FC<DataTableContainerProps> = ({
             <MenuButton as={Button} size="sm" variant="outline" rightIcon={<ChevronDownIcon />}>
               Columns
             </MenuButton>
-            <MenuList minW="200px" maxH="320px" overflowY="auto">
+            <MenuList minW="200px" maxH="320px" overflowY="auto" zIndex={1400}>
               {table.getAllLeafColumns().map((column) => (
                 <MenuItem key={column.id} closeOnSelect={false}>
                   <Checkbox
@@ -347,14 +348,40 @@ const DataTableContainer: React.FC<DataTableContainerProps> = ({
         )}
       </Box>
 
-      {/* Pagination (only when we have data) */}
+      {/* Pagination and rows-per-page (only when we have data) */}
       {hasData && (
         <Box borderTop="solid 1px" borderColor="gray.200">
-          <Paginator
-            currentPage={pagination.pageIndex + 1}
-            totalPages={table.getPageCount()}
-            onChange={(page) => table.setPageIndex(page - 1)}
-          />
+          <HStack w="full" p={4} justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={3}>
+            <HStack alignItems="center" spacing={2}>
+              <Text fontSize="sm" color="gray.600" whiteSpace="nowrap">
+                Rows per page:
+              </Text>
+              <Select
+                size="sm"
+                value={pagination.pageSize}
+                onChange={(e) => {
+                  const size = Number(e.target.value);
+                  table.setPageSize(size);
+                  table.setPageIndex(0);
+                }}
+                w="auto"
+                minW="70px"
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </Select>
+            </HStack>
+            <Box flex={1} display="flex" justifyContent="center">
+              <Paginator
+                currentPage={pagination.pageIndex + 1}
+                totalPages={table.getPageCount()}
+                onChange={(page) => table.setPageIndex(page - 1)}
+              />
+            </Box>
+          </HStack>
         </Box>
       )}
     </Box>
