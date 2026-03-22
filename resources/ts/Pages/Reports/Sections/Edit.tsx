@@ -96,17 +96,18 @@ const Edit = ({series, section, report}: Props) => {
         </FormControl>
 
         {data.series.length > 0 && series && (
-          <HStack w={'full'} alignItems={'flex-start'}>
+          <>
             {Object.keys(series.filters).length > 0 && (
               <AddFilters
                 allFilters={series.filters}
                 selectedFilters={data.filters}
                 onFiltersChange={(filters) => setData('filters', filters)}
+                tableMode={data.format === 'table'}
               />
             )}
 
-            {series.slices.length > 0 && (
-              <>
+            {series.slices.length > 0 && data.format !== 'table' && (
+              <HStack w={'full'} alignItems={'flex-start'}>
                 {['line', 'bar', 'pie'].includes(data.format) && (
                   <>
                     <FormControl flex={1}>
@@ -183,9 +184,9 @@ const Edit = ({series, section, report}: Props) => {
                     </VStack>
                   </RadioGroup>
                 </FormControl>
-              </>
+              </HStack>
             )}
-          </HStack>
+          </>
         )}
         <HStack w={'full'} justifyContent={'space-between'}>
           <ConfirmableBtn

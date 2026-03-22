@@ -1,8 +1,10 @@
 <?php
 
 use Calvient\Arbol\Http\Controllers\API\SeriesController;
+use Calvient\Arbol\Http\Controllers\API\StatelessSectionController;
 use Calvient\Arbol\Http\Controllers\ReportsController;
 use Calvient\Arbol\Http\Controllers\SectionsController;
+use Calvient\Arbol\Http\Controllers\SectionViewController;
 use Calvient\Arbol\Http\Middleware\HandleInertiaRequests;
 use Calvient\Arbol\Models\ArbolReport;
 use Calvient\Arbol\Models\ArbolSection;
@@ -31,4 +33,8 @@ Route::middleware(['auth', 'web', HandleInertiaRequests::class])->prefix('/arbol
 
     // Download series data
     Route::get('/series-data/download', [SeriesController::class, 'downloadData']);
+
+    // Stateless section view — renders a single section from URL params (no database record needed)
+    Route::get('/section', [SectionViewController::class, 'show'])->name('section.show');
+    Route::get('/section-data/download', [StatelessSectionController::class, 'download']);
 });

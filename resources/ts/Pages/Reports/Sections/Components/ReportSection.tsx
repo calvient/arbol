@@ -12,9 +12,14 @@ import {useEffect, useState} from 'react';
 interface ReportSectionProps {
   report: Report;
   section: Section;
+  reportFilters?: Array<{field: string; value: string}>;
+  searchQuery?: string;
+  refreshKey?: number;
+  onLoadingChange?: (sectionId: number, loading: boolean) => void;
+  hasFilterBar?: boolean;
 }
 
-const ReportSection = ({report, section}: ReportSectionProps) => {
+const ReportSection = ({report, section, reportFilters = [], searchQuery = '', refreshKey = 0, onLoadingChange, hasFilterBar = false}: ReportSectionProps) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,19 +27,30 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [currentSlice, setCurrentSlice] = useState<string | null>(null);
 
+  // For table sections with a filter bar, section.filters are report filter config (not hard restrictions)
+  // Only report-level UI filters apply. For other formats, merge section + report filters.
+  const mergedFilters = hasFilterBar && section.format === 'table'
+    ? [...reportFilters]
+    : [...section.filters, ...reportFilters];
+
+  // For tables, skip slicing when the filter bar is available (filters handle narrowing)
+  const effectiveSlice =
+    hasFilterBar && section.format === 'table' ? null : section.slice;
+
   const loadData = async (forceRefresh: boolean = false) => {
     setIsLoading(true);
+    if (section.id) onLoadingChange?.(section.id, true);
     if (forceRefresh) setTimeElapsed(0);
 
     const response = await fetch(
       `/api/arbol/series-data?${toQueryString({
         section_id: section.id,
         series: section.series,
-        slice: section.slice,
+        slice: effectiveSlice,
         xaxis_slice: section.xaxis_slice,
         aggregator: section.aggregator,
         ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
-        filters: section.filters,
+        filters: mergedFilters,
         format: section.format,
         force_refresh: forceRefresh ? 1 : 0,
       })}`,
@@ -57,6 +73,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
         }
       }
       setIsLoading(false);
+      if (section.id) onLoadingChange?.(section.id, false);
     } else if (response.status === 202) {
       const data = await response.json();
       setEstimatedTime(data.estimated_time);
@@ -65,6 +82,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
   };
 
   useEffect(() => {
+    setCurrentSlice(null);
     loadData();
 
     const interval = setInterval(() => {
@@ -73,7 +91,7 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refreshKey]);
 
   if (isLoading || !data) {
     return (
@@ -129,16 +147,16 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
           href={`/arbol/series-data/download?${toQueryString({
             section_id: section.id,
             series: section.series,
-            slice: section.slice,
+            slice: effectiveSlice,
             xaxis_slice: section.xaxis_slice,
             aggregator: section.aggregator,
             ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
-            filters: section.filters,
+            filters: mergedFilters,
             format: section.format,
             slice_key: currentSlice,
           })}`}
           size={'xs'}
-          title='Download current slice only'
+          title='Download current view'
         >
           Download View
         </Button>
@@ -148,15 +166,15 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
           href={`/arbol/series-data/download?${toQueryString({
             section_id: section.id,
             series: section.series,
-            slice: section.slice,
+            slice: effectiveSlice,
             xaxis_slice: section.xaxis_slice,
             aggregator: section.aggregator,
             ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
-            filters: section.filters,
+            filters: mergedFilters,
             format: section.format,
           })}`}
           size={'xs'}
-          title='Download all slices'
+          title='Download all data'
         >
           Download All
         </Button>
@@ -170,7 +188,13 @@ const ReportSection = ({report, section}: ReportSectionProps) => {
       </HStack>
 
       {section.format === 'table' && (
-        <TableFormat data={data} currentSlice={currentSlice} onSliceChange={setCurrentSlice} />
+        <TableFormat
+          data={data}
+          currentSlice={currentSlice}
+          onSliceChange={setCurrentSlice}
+          searchQuery={searchQuery}
+          hideSliceSelector={hasFilterBar}
+        />
       )}
       {section.format === 'pie' && <PieFormat data={data} />}
       {section.format === 'line' && (

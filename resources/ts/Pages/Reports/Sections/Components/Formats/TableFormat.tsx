@@ -18,9 +18,11 @@ interface TableFormatProps {
   data: Record<string, Row[]>;
   currentSlice: string | null;
   onSliceChange: (slice: string) => void;
+  searchQuery?: string;
+  hideSliceSelector?: boolean;
 }
 
-const TableFormat = ({data, currentSlice, onSliceChange}: TableFormatProps) => {
+const TableFormat = ({data, currentSlice, onSliceChange, searchQuery = '', hideSliceSelector = false}: TableFormatProps) => {
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -40,8 +42,15 @@ const TableFormat = ({data, currentSlice, onSliceChange}: TableFormatProps) => {
   );
 
   const rows = React.useMemo(() => {
-    return data[activeSlice];
-  }, [data, activeSlice]);
+    const sliceData = data[activeSlice] ?? [];
+    if (!searchQuery) return sliceData;
+    const query = searchQuery.toLowerCase();
+    return sliceData.filter((row) =>
+      Object.values(row).some(
+        (val) => val != null && String(val).toLowerCase().includes(query),
+      ),
+    );
+  }, [data, activeSlice, searchQuery]);
 
   const table = useReactTable({
     // @ts-expect-error -- Because the columns are dynamically generated
@@ -58,17 +67,19 @@ const TableFormat = ({data, currentSlice, onSliceChange}: TableFormatProps) => {
 
   return (
     <Box w={'full'} mt={4}>
-      <Select
-        value={activeSlice}
-        onChange={(e) => onSliceChange(e.target.value)}
-        boxShadow={'0 -1px 0 rgba(0, 0, 0, 0.2)'}
-      >
-        {slices.map((slice) => (
-          <option key={slice} value={slice}>
-            {slice}
-          </option>
-        ))}
-      </Select>
+      {!hideSliceSelector && slices.length > 1 && (
+        <Select
+          value={activeSlice}
+          onChange={(e) => onSliceChange(e.target.value)}
+          boxShadow={'0 -1px 0 rgba(0, 0, 0, 0.2)'}
+        >
+          {slices.map((slice) => (
+            <option key={slice} value={slice}>
+              {slice}
+            </option>
+          ))}
+        </Select>
+      )}
 
       <Box overflowX={'auto'}>
         <Table mt={4} size={'sm'}>

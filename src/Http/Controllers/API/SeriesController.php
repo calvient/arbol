@@ -48,15 +48,20 @@ class SeriesController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Compute filter hash from request filters for cache scoping
+        $filters = request('filters', []);
+        $filterHash = ! empty($filters) ? ArbolService::computeFilterHash($filters) : null;
+
         // Clear the cache if the force_refresh parameter is set
         if (request('force_refresh')) {
-            $this->arbolService->clearCacheForSection($section);
+            $this->arbolService->clearCacheForSection($section, $filterHash);
         }
 
         // For chart formats, check formatted cache first (pre-computed in job)
         if (in_array(request('format'), ['line', 'bar', 'pie'])) {
             $formattedData = $this->arbolService->getFormattedDataFromCache(
-                arbolSection: $section
+                arbolSection: $section,
+                filterHash: $filterHash,
             );
 
             if (! is_null($formattedData)) {
@@ -70,7 +75,8 @@ class SeriesController extends Controller
 
         // Get raw cached data (for table format or as fallback)
         $data = $this->arbolService->getDataFromCache(
-            arbolSection: $section
+            arbolSection: $section,
+            filterHash: $filterHash,
         );
 
         // Return the data if it exists
@@ -82,11 +88,11 @@ class SeriesController extends Controller
             // For chart formats, raw cache exists but formatted cache is missing.
             // Dispatch a job to format in the background instead of blocking the web thread.
             if (in_array(request('format'), ['line', 'bar', 'pie'])) {
-                if (! $this->isCurrentlyRunning()) {
+                if (! $this->isCurrentlyRunning($filterHash)) {
                     LoadSectionData::dispatch(
                         arbolSection: $section,
                         series: request('series'),
-                        filters: request('filters', []),
+                        filters: $filters,
                         slice: request('format') === 'line' || request('format') === 'bar'
                             ? request('xaxis_slice')
                             : request('slice'),
@@ -95,6 +101,7 @@ class SeriesController extends Controller
                         aggregator: request('aggregator', 'Default'),
                         chartSlice: request('slice'),
                         percentageMode: request('percentage_mode'),
+                        filterHash: $filterHash,
                     );
                 }
 
@@ -103,6 +110,7 @@ class SeriesController extends Controller
                         'message' => 'We are currently processing your request. Please try again in a few seconds.',
                         'estimated_time' => $this->arbolService->getLastRunDuration(
                             arbolSection: $section,
+                            filterHash: $filterHash,
                         ) ?? 300,
                     ],
                     202,
@@ -118,11 +126,11 @@ class SeriesController extends Controller
             return response()->json($formattedData);
         }
 
-        if (! $this->isCurrentlyRunning() || request('force_refresh')) {
+        if (! $this->isCurrentlyRunning($filterHash) || request('force_refresh')) {
             LoadSectionData::dispatch(
                 arbolSection: $section,
                 series: request('series'),
-                filters: request('filters', []),
+                filters: $filters,
                 // xaxis_slice is used for line and bar charts
                 slice: request('format') === 'line' || request('format') === 'bar'
                     ? request('xaxis_slice')
@@ -132,6 +140,7 @@ class SeriesController extends Controller
                 aggregator: request('aggregator', 'Default'),
                 chartSlice: request('slice'),
                 percentageMode: request('percentage_mode'),
+                filterHash: $filterHash,
             );
         }
 
@@ -140,6 +149,7 @@ class SeriesController extends Controller
                 'message' => 'We are currently processing your request. Please try again in a few seconds.',
                 'estimated_time' => $this->arbolService->getLastRunDuration(
                     arbolSection: $section,
+                    filterHash: $filterHash,
                 ) ?? 300,
             ],
             202,
@@ -369,10 +379,11 @@ class SeriesController extends Controller
             ->toArray();
     }
 
-    private function isCurrentlyRunning(): bool
+    private function isCurrentlyRunning(?string $filterHash = null): bool
     {
         return $this->arbolService->getIsRunning(
             arbolSection: ArbolSection::findOrFail(request('section_id')),
+            filterHash: $filterHash,
         );
     }
 
