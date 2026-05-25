@@ -91,6 +91,7 @@ resources/
       chartTruncation.ts           # Detects backend truncation metadata in chart data
     Components/
       Layout.tsx                   # App shell layout
+      DataTableContainer.tsx       # Primary data table: sticky headers, column visibility, sort, pagination, toolbar
       Paginator.tsx                # Table pagination component
       BoxSelect.tsx                # Icon-based format selector (table/line/bar/pie)
       AutoComplete.tsx             # Autocomplete input
@@ -112,6 +113,10 @@ resources/
             BarFormat.tsx          # Recharts bar chart
             PieFormat.tsx          # Recharts pie chart
             TruncationWarning.tsx  # Warning banner for truncated chart data
+    Embeddable/              # Public API for parent app reuse
+      index.ts               # Exports DataTableFromUrl, DataTableContainer + types
+      DataTableFromUrl.tsx   # URL-driven wrapper: pass dataUrl, get table with fetch/polling
+      README.md              # How to use from parent app
 ```
 
 ---
@@ -679,12 +684,18 @@ type Section = {
 
 ## Format Rendering
 
+### Data Table Container (`DataTableContainer.tsx`)
+- **Primary table container** used by all Arbol reporting pages (report sections and standalone section view).
+- Lives in its own container region (`data-region="data-table-container"`); table sections render inside a `data-region="data-table"` wrapper.
+- **Sticky column headers**; sortable columns; **column show/hide** via a Columns menu; **pagination** (no infinite scroll).
+- **Top-right toolbar**: Refresh (re-run query), Export to CSV, Add to Report (optional hook), and Columns visibility menu.
+- Exposes **canonical table state** via `onTableStateChange(state)`: `visibleColumns`, `sortBy`, `pageIndex`, `pageSize`, `totalRows`, `currentViewRows`, `allColumns`. Downstream visualizations should consume this state so the table remains the single source of truth.
+
+**Using the table in the parent app:** The table can be reused in different views across the app. Use **`DataTableFromUrl`** from `resources/ts/Embeddable` when you only need to pass the data URL (e.g. the stateless section endpoint); it handles fetching, 202 polling, and loading. Use **`DataTableContainer`** when you already have data and want full control. See `resources/ts/Embeddable/README.md` for setup (Vite alias, props, and examples).
+
 ### Table Format (`TableFormat.tsx`)
-- Receives `Record<string, Row[]>` (slice-key to rows)
-- Shows a dropdown to select which slice to view
-- Uses TanStack Table for sorting and pagination (10 rows/page)
+- Receives `Record<string, Row[]>` (slice-key to rows). Report table sections use `DataTableContainer` instead for sticky headers, column visibility, toolbar actions, and canonical state. `TableFormat` remains for simpler table-only usage where the full container is not needed.
 - Column names are inferred from the data via `inferColumnNames()`
-- Supports "Download View" (current slice only) and "Download All" CSV exports
 
 ### Line Chart (`LineFormat.tsx`)
 - Receives `Array<{name: string, [sliceValue]: number}>`

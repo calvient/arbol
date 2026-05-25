@@ -1,7 +1,7 @@
 import {Section} from '../../../../Types/Section.ts';
 import {Box, Button, HStack, Heading, Spacer, Text, Link as ChakraLink} from '@calvient/decal';
 import {toQueryString} from '../../../../Utils/toQueryString.ts';
-import TableFormat from './Formats/TableFormat.tsx';
+import DataTableContainer from '../../../../Components/DataTableContainer.tsx';
 import PieFormat from './Formats/PieFormat.tsx';
 import {Link} from '@inertiajs/react';
 import {Report} from '../../../../Types/Report.ts';
@@ -124,9 +124,24 @@ const ReportSection = ({report, section, reportFilters = [], searchQuery = '', r
     );
   }
 
+  const exportCsvUrl =
+    section.format === 'table'
+      ? `/arbol/series-data/download?${toQueryString({
+          section_id: section.id,
+          series: section.series,
+          slice: effectiveSlice,
+          xaxis_slice: section.xaxis_slice,
+          aggregator: section.aggregator,
+          ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
+          filters: mergedFilters,
+          format: section.format,
+          slice_key: currentSlice,
+        })}`
+      : undefined;
+
   return (
     <Box w={'full'} p={4} border={'solid 1px'} borderColor={'gray.200'} borderRadius={'md'}>
-      <HStack spacing={2}>
+      <HStack spacing={2} mb={section.format === 'table' ? 3 : 0}>
         <Box>
           <Heading size={'sm'}>{section.name}</Heading>
           {(section.description ?? '').split('\n').map((line, index) => {
@@ -138,46 +153,50 @@ const ReportSection = ({report, section, reportFilters = [], searchQuery = '', r
           })}
         </Box>
         <Spacer />
-        <Button size={'xs'} colorScheme={'blue'} onClick={() => loadData(true)}>
-          Refresh
-        </Button>
-        <Button
-          target='_blank'
-          as={ChakraLink}
-          href={`/arbol/series-data/download?${toQueryString({
-            section_id: section.id,
-            series: section.series,
-            slice: effectiveSlice,
-            xaxis_slice: section.xaxis_slice,
-            aggregator: section.aggregator,
-            ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
-            filters: mergedFilters,
-            format: section.format,
-            slice_key: currentSlice,
-          })}`}
-          size={'xs'}
-          title='Download current view'
-        >
-          Download View
-        </Button>
-        <Button
-          target='_blank'
-          as={ChakraLink}
-          href={`/arbol/series-data/download?${toQueryString({
-            section_id: section.id,
-            series: section.series,
-            slice: effectiveSlice,
-            xaxis_slice: section.xaxis_slice,
-            aggregator: section.aggregator,
-            ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
-            filters: mergedFilters,
-            format: section.format,
-          })}`}
-          size={'xs'}
-          title='Download all data'
-        >
-          Download All
-        </Button>
+        {section.format !== 'table' && (
+          <>
+            <Button size={'xs'} colorScheme={'blue'} onClick={() => loadData(true)}>
+              Refresh
+            </Button>
+            <Button
+              target='_blank'
+              as={ChakraLink}
+              href={`/arbol/series-data/download?${toQueryString({
+                section_id: section.id,
+                series: section.series,
+                slice: effectiveSlice,
+                xaxis_slice: section.xaxis_slice,
+                aggregator: section.aggregator,
+                ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
+                filters: mergedFilters,
+                format: section.format,
+                slice_key: currentSlice,
+              })}`}
+              size={'xs'}
+              title='Download current view'
+            >
+              Download View
+            </Button>
+            <Button
+              target='_blank'
+              as={ChakraLink}
+              href={`/arbol/series-data/download?${toQueryString({
+                section_id: section.id,
+                series: section.series,
+                slice: effectiveSlice,
+                xaxis_slice: section.xaxis_slice,
+                aggregator: section.aggregator,
+                ...(section.percentage_mode ? {percentage_mode: section.percentage_mode} : {}),
+                filters: mergedFilters,
+                format: section.format,
+              })}`}
+              size={'xs'}
+              title='Download all data'
+            >
+              Download All
+            </Button>
+          </>
+        )}
         <Button
           as={Link}
           href={`/arbol/reports/${report.id}/sections/${section.id}/edit`}
@@ -188,13 +207,17 @@ const ReportSection = ({report, section, reportFilters = [], searchQuery = '', r
       </HStack>
 
       {section.format === 'table' && (
-        <TableFormat
-          data={data}
-          currentSlice={currentSlice}
-          onSliceChange={setCurrentSlice}
-          searchQuery={searchQuery}
-          hideSliceSelector={hasFilterBar}
-        />
+        <Box data-region="data-table">
+          <DataTableContainer
+            data={data}
+            currentSlice={currentSlice}
+            onSliceChange={setCurrentSlice}
+            searchQuery={searchQuery}
+            hideSliceSelector={hasFilterBar}
+            onRefresh={() => loadData(true)}
+            exportCsvUrl={exportCsvUrl}
+          />
+        </Box>
       )}
       {section.format === 'pie' && <PieFormat data={data} />}
       {section.format === 'line' && (

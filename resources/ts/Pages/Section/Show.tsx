@@ -1,9 +1,9 @@
 import MinimalLayout from '../../Components/MinimalLayout.tsx';
 import {Head} from '@inertiajs/react';
-import React, {useCallback, useEffect, useState} from 'react';
-import {Box, Button, Heading, HStack, Link as ChakraLink, Spacer, Text} from '@calvient/decal';
+import React, {useEffect, useState} from 'react';
+import {Box, Button, Heading, Text} from '@calvient/decal';
 import {toQueryString} from '../../Utils/toQueryString.ts';
-import TableFormat from '../Reports/Sections/Components/Formats/TableFormat.tsx';
+import DataTableFromUrl from '../../Embeddable/DataTableFromUrl.tsx';
 import ReportFilterBar from '../../Components/ReportFilterBar.tsx';
 
 interface ShowProps {
@@ -17,11 +17,8 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any>(null);
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
-  const [currentSlice, setCurrentSlice] = useState<string | null>(null);
 
   const hasFilters = Object.keys(allFilters).length > 0;
 
@@ -47,56 +44,23 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
     window.history.replaceState({}, '', `?${params.toString()}`);
   }, [reportFilters, series, allFilters]);
 
-  const loadData = useCallback(
-    async (forceRefresh: boolean = false) => {
-      setIsLoading(true);
-      if (forceRefresh) setTimeElapsed(0);
-
-      const response = await fetch(
-        `/api/arbol/section-data?${toQueryString({
-          series,
-          filters: reportFilters,
-          format: 'table',
-          force_refresh: forceRefresh ? 1 : 0,
-        })}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-        },
-      );
-
-      if (response.status === 200) {
-        const result = await response.json();
-        setData(result);
-        if (result && typeof result === 'object' && !Array.isArray(result)) {
-          const keys = Object.keys(result);
-          if (keys.length > 0 && !currentSlice) {
-            setCurrentSlice(keys[0]);
-          }
-        }
-        setIsLoading(false);
-      } else if (response.status === 202) {
-        const result = await response.json();
-        setEstimatedTime(result.estimated_time);
-        setTimeout(() => loadData(), 10000);
-      }
-    },
-    [series, reportFilters, currentSlice],
-  );
+  const dataUrl = `/api/arbol/section-data?${toQueryString({
+    series,
+    filters: reportFilters,
+    format: 'table',
+    force_refresh: 0,
+  })}`;
+  const exportCsvUrl = `/arbol/section-data/download?${toQueryString({
+    series,
+    filters: reportFilters,
+    format: 'table',
+    slice_key: 'All',
+  })}`;
 
   useEffect(() => {
-    setCurrentSlice(null);
-    loadData();
-
-    const interval = setInterval(() => {
-      setTimeElapsed((prev) => prev + 1);
-    }, 1000);
-
+    const interval = setInterval(() => setTimeElapsed((prev) => prev + 1), 1000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, []);
 
   return (
     <>
@@ -117,49 +81,32 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
         </Box>
       )}
 
-      <Box mt={4} w={'full'} p={4} border={'solid 1px'} borderColor={'gray.200'} borderRadius={'md'}>
-        {isLoading || !data ? (
-          <Box>
-            <Text>Loading data...</Text>
-            {estimatedTime - timeElapsed > 0 && (
-              <Text>Estimated time remaining: {estimatedTime - timeElapsed} second(s)</Text>
-            )}
-            {estimatedTime - timeElapsed < 0 && (
-              <>
-                <Text>This is taking longer than expected...</Text>
-                <Button mt={4} size={'xs'} colorScheme={'red'} onClick={() => loadData(true)}>
-                  Force Refresh
-                </Button>
-              </>
-            )}
+      <Box mt={4} w={'full'} data-region="data-table">
+        <DataTableFromUrl
+          dataUrl={dataUrl}
+          exportCsvUrl={exportCsvUrl}
+          searchQuery={searchQuery}
+          refreshKey={refreshKey}
+          onLoadingChange={(loading) => {
+            setIsLoading(loading);
+            if (loading) setTimeElapsed(0);
+          }}
+          onReceiving202={setEstimatedTime}
+        />
+        {isLoading && estimatedTime - timeElapsed > 0 && (
+          <Box mt={2} px={2}>
+            <Text fontSize="sm" color="gray.500">
+              Estimated time remaining: {estimatedTime - timeElapsed} second(s)
+            </Text>
           </Box>
-        ) : (
-          <>
-            <HStack spacing={2}>
-              <Spacer />
-              <Button
-                target='_blank'
-                as={ChakraLink}
-                href={`/arbol/section-data/download?${toQueryString({
-                  series,
-                  filters: reportFilters,
-                  format: 'table',
-                  slice_key: currentSlice,
-                })}`}
-                size={'xs'}
-                title='Download current view'
-              >
-                Download
-              </Button>
-            </HStack>
-            <TableFormat
-              data={data}
-              currentSlice={currentSlice}
-              onSliceChange={setCurrentSlice}
-              searchQuery={searchQuery}
-              hideSliceSelector={true}
-            />
-          </>
+        )}
+        {isLoading && estimatedTime - timeElapsed < 0 && (
+          <Box mt={2} px={2}>
+            <Text fontSize="sm" color="gray.600">This is taking longer than expected.</Text>
+            <Button mt={2} size="xs" colorScheme="red" onClick={() => setRefreshKey((k) => k + 1)}>
+              Force Refresh
+            </Button>
+          </Box>
         )}
       </Box>
     </>
