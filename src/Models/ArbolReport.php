@@ -6,6 +6,7 @@ use Calvient\Arbol\Contracts\ArbolAccess;
 use Calvient\Arbol\Database\Factories\ArbolReportFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 
 class ArbolReport extends Model
@@ -32,7 +33,7 @@ class ArbolReport extends Model
         return $this->hasMany(ArbolSection::class);
     }
 
-    public function author()
+    public function author(): BelongsTo
     {
         return $this->belongsTo($this->getUserModel(), 'author_id');
     }

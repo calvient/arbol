@@ -24,8 +24,10 @@ class TestCase extends Orchestra
         ];
     }
 
-    protected function getEnvironmentSetUp($app)
+    protected function defineEnvironment($app)
     {
+        $app['config']->set('app.key', 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=');
+
         // Use SQLite for testing
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [

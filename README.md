@@ -14,7 +14,7 @@ This is a simple tool that solves 80% of a complex problem! So you may still wan
 ## Requirements
 
 - PHP 8.3+
-- Laravel 10, 11, or 12
+- Laravel 10, 11, 12, or 13
 - Inertia.js with React
 
 ## Installation
