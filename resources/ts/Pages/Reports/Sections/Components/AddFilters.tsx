@@ -1,7 +1,5 @@
 import {
-  AddIcon,
   Button,
-  CloseIcon,
   FormControl,
   FormLabel,
   IconButton,
@@ -16,7 +14,8 @@ import {
   Text,
   Wrap,
   WrapItem,
-} from '@calvient/decal';
+} from '@chakra-ui/react';
+import {AddIcon, CloseIcon} from '@chakra-ui/icons';
 import {FC, useState} from 'react';
 
 interface AddFiltersProps {
@@ -26,7 +25,12 @@ interface AddFiltersProps {
   tableMode?: boolean;
 }
 
-const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFiltersChange, tableMode = false}) => {
+const AddFilters: FC<AddFiltersProps> = ({
+  allFilters,
+  selectedFilters,
+  onFiltersChange,
+  tableMode = false,
+}) => {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [filterToAdd, setFilterToAdd] = useState<string | undefined>();
   const [filterValueToAdd, setFilterValueToAdd] = useState<string | undefined>();
@@ -41,9 +45,7 @@ const AddFilters: FC<AddFiltersProps> = ({allFilters, selectedFilters, onFilters
 
   // In table mode, only show filter groups not already added
   const availableFilterGroups = tableMode
-    ? Object.keys(allFilters).filter(
-        (group) => !selectedFilters.some((f) => f.field === group),
-      )
+    ? Object.keys(allFilters).filter((group) => !selectedFilters.some((f) => f.field === group))
     : Object.keys(allFilters);
 
   // In table mode, the add button only requires a group (value is optional)

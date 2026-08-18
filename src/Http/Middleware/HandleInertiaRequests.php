@@ -14,7 +14,7 @@ class HandleInertiaRequests extends Middleware
      *
      * @var string
      */
-    protected $rootView = 'vendor.arbol.app';
+    protected $rootView = 'arbol::app';
 
     /**
      * Determines the current asset version.

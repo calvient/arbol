@@ -1,4 +1,4 @@
-import {Box, Text} from '@calvient/decal';
+import {Box, Text} from '@chakra-ui/react';
 
 interface TruncationWarningProps {
   total: number;

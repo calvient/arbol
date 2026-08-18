@@ -5,6 +5,7 @@ namespace Calvient\Arbol\Tests;
 use Calvient\Arbol\ArbolServiceProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Inertia\ServiceProvider as InertiaServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -12,6 +13,8 @@ class TestCase extends Orchestra
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->withoutVite();
 
         // Run package migrations
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
@@ -21,6 +24,7 @@ class TestCase extends Orchestra
     {
         return [
             ArbolServiceProvider::class,
+            InertiaServiceProvider::class,
         ];
     }
 
@@ -39,6 +43,8 @@ class TestCase extends Orchestra
         // Set up a simple User model for testing
         $app['config']->set('arbol.user_model', TestUser::class);
         $app['config']->set('arbol.series_path', __DIR__.'/Series');
+        $app['config']->set('inertia.pages.paths', [__DIR__.'/../resources/ts/Pages']);
+        $app['config']->set('inertia.pages.extensions', ['tsx']);
     }
 
     protected function defineDatabaseMigrations()

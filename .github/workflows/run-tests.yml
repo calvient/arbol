@@ -1,0 +1,132 @@
+name: run-tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [8.3]
+        laravel: ['12.*', '13.*']
+        stability: [prefer-lowest, prefer-stable]
+        include:
+          - laravel: '12.*'
+            testbench: ^10.9
+          - laravel: '13.*'
+            testbench: ^11.1
+
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.stability }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo, pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer require --dev "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+
+      - name: Validate Composer metadata
+        run: composer validate --strict --no-check-publish
+
+      - name: Run tests
+        run: composer test
+
+      - name: Run static analysis
+        run: composer analyse
+
+  compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        laravel: ['^12.0@stable', '^13.0@stable']
+    env:
+      COMPAT_DIR: ${{ runner.temp }}/arbol-consumer
+
+    name: Consumer install / Laravel ${{ matrix.laravel }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          coverage: none
+
+      - name: Prepare minimal consumer
+        run: |
+          mkdir -p "$COMPAT_DIR"
+          composer init --working-dir="$COMPAT_DIR" --name="calvient/arbol-compatibility" --no-interaction
+          composer config --working-dir="$COMPAT_DIR" repositories.arbol path "$GITHUB_WORKSPACE"
+          composer config --working-dir="$COMPAT_DIR" minimum-stability dev
+          composer config --working-dir="$COMPAT_DIR" prefer-stable true
+
+      - name: Install package in the minimal consumer
+        run: |
+          composer require --working-dir="$COMPAT_DIR" "laravel/framework:${{ matrix.laravel }}" "calvient/arbol:@dev" --prefer-dist --no-interaction
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          coverage: none
+
+      - name: Install current production dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-dev
+
+      - name: Audit dependencies
+        run: composer audit --no-dev
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Test
+        run: yarn test
+
+      - name: Build
+        run: yarn build

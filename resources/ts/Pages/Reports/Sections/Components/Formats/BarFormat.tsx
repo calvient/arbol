@@ -1,4 +1,4 @@
-import {Box} from '@calvient/decal';
+import {Box} from '@chakra-ui/react';
 import {
   Bar,
   BarChart,
@@ -14,11 +14,18 @@ import {extractTruncationMeta} from '../../../../../Utils/chartTruncation';
 import TruncationWarning from './TruncationWarning';
 
 interface BarChartFormatProps {
-  data: Array<{name: string; value: number}>;
+  data: Array<Record<string, string | number>>;
   isPercentage?: boolean;
 }
 
-const formatNumber = (value: number, isPercentage?: boolean) => {
+const formatNumber = (
+  value: number | string | ReadonlyArray<number | string> | undefined,
+  isPercentage?: boolean,
+) => {
+  if (typeof value !== 'number') {
+    return value?.toString() ?? '';
+  }
+
   const formatted = value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -28,7 +35,7 @@ const formatNumber = (value: number, isPercentage?: boolean) => {
 
 const BarFormat = ({data, isPercentage}: BarChartFormatProps) => {
   const {chartData, meta} = extractTruncationMeta(data);
-  const keys = Object.keys(chartData[0]).filter((key) => key !== 'name');
+  const keys = Object.keys(chartData[0] ?? {}).filter((key) => key !== 'name');
 
   return (
     <>
@@ -43,9 +50,9 @@ const BarFormat = ({data, isPercentage}: BarChartFormatProps) => {
               domain={isPercentage ? [0, 100] : undefined}
               tickFormatter={(value: number) => formatNumber(value, isPercentage)}
             />
-            <Tooltip formatter={(value: number) => formatNumber(value, isPercentage)} />
+            <Tooltip formatter={(value) => formatNumber(value, isPercentage)} />
             {keys.map((key) => (
-              <Bar dataKey={key} fill={stringToColor(key)} />
+              <Bar key={key} dataKey={key} fill={stringToColor(key)} />
             ))}
           </BarChart>
         </ResponsiveContainer>

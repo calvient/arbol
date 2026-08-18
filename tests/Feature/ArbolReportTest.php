@@ -2,6 +2,21 @@
 
 use Calvient\Arbol\Models\ArbolReport;
 use Calvient\Arbol\Models\ArbolSection;
+use Inertia\Testing\AssertableInertia as Assert;
+
+test('it returns an Inertia v3 response for the reports index', function () {
+    $user = createTestUser();
+    ArbolReport::factory()->forAuthor($user->id)->create();
+
+    $response = $this->actingAs($user)->get('/arbol/reports');
+
+    $response
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Reports/Index')
+            ->has('reports', 1)
+        );
+});
 
 test('it can create an arbol report', function () {
     $report = ArbolReport::factory()->create([

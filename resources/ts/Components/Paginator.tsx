@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Box, Button, HStack} from '@calvient/decal';
+import {Box, Button, HStack} from '@chakra-ui/react';
 
 interface PaginatorProps {
   currentPage: number;

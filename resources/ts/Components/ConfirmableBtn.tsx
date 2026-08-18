@@ -1,5 +1,5 @@
 import {FC, useState} from 'react';
-import {Button, ButtonProps} from '@calvient/decal';
+import {Button, ButtonProps} from '@chakra-ui/react';
 
 interface ConfirmableBtnProps extends ButtonProps {
   confirmText?: string;

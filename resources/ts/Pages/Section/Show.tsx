@@ -1,7 +1,7 @@
 import MinimalLayout from '../../Components/MinimalLayout.tsx';
 import {Head} from '@inertiajs/react';
 import React, {useCallback, useEffect, useState} from 'react';
-import {Box, Button, Heading, HStack, Link as ChakraLink, Spacer, Text} from '@calvient/decal';
+import {Box, Button, Heading, HStack, Link as ChakraLink, Spacer, Text} from '@chakra-ui/react';
 import {toQueryString} from '../../Utils/toQueryString.ts';
 import TableFormat from '../Reports/Sections/Components/Formats/TableFormat.tsx';
 import ReportFilterBar from '../../Components/ReportFilterBar.tsx';
@@ -13,7 +13,8 @@ interface ShowProps {
 }
 
 const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
-  const [reportFilters, setReportFilters] = useState<Array<{field: string; value: string}>>(defaultFilters);
+  const [reportFilters, setReportFilters] =
+    useState<Array<{field: string; value: string}>>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,7 +118,14 @@ const Show = ({series, allFilters, defaultFilters = []}: ShowProps) => {
         </Box>
       )}
 
-      <Box mt={4} w={'full'} p={4} border={'solid 1px'} borderColor={'gray.200'} borderRadius={'md'}>
+      <Box
+        mt={4}
+        w={'full'}
+        p={4}
+        border={'solid 1px'}
+        borderColor={'gray.200'}
+        borderRadius={'md'}
+      >
         {isLoading || !data ? (
           <Box>
             <Text>Loading data...</Text>

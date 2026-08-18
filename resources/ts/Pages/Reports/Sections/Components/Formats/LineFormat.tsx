@@ -1,4 +1,4 @@
-import {Box} from '@calvient/decal';
+import {Box} from '@chakra-ui/react';
 import {
   Line,
   LineChart,
@@ -14,11 +14,18 @@ import {extractTruncationMeta} from '../../../../../Utils/chartTruncation';
 import TruncationWarning from './TruncationWarning';
 
 interface LineGraphFormatProps {
-  data: Array<{name: string; value: number}>;
+  data: Array<Record<string, string | number>>;
   isPercentage?: boolean;
 }
 
-const formatNumber = (value: number, isPercentage?: boolean) => {
+const formatNumber = (
+  value: number | string | ReadonlyArray<number | string> | undefined,
+  isPercentage?: boolean,
+) => {
+  if (typeof value !== 'number') {
+    return value?.toString() ?? '';
+  }
+
   const formatted = value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -28,7 +35,7 @@ const formatNumber = (value: number, isPercentage?: boolean) => {
 
 const LineFormat = ({data, isPercentage}: LineGraphFormatProps) => {
   const {chartData, meta} = extractTruncationMeta(data);
-  const keys = Object.keys(chartData[0]).filter((key) => key !== 'name');
+  const keys = Object.keys(chartData[0] ?? {}).filter((key) => key !== 'name');
 
   return (
     <>
@@ -50,7 +57,7 @@ const LineFormat = ({data, isPercentage}: LineGraphFormatProps) => {
               }
               tickFormatter={(value: number) => formatNumber(value, isPercentage)}
             />
-            <Tooltip formatter={(value: number) => formatNumber(value, isPercentage)} />
+            <Tooltip formatter={(value) => formatNumber(value, isPercentage)} />
             {keys.map((key) => (
               <Line
                 key={key}
