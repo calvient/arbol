@@ -10,7 +10,7 @@ import {
   Td,
   Heading,
   Spacer,
-} from '@calvient/decal';
+} from '@chakra-ui/react';
 import Layout from '../../Components/Layout.tsx';
 import React, {FC} from 'react';
 import {Head, Link} from '@inertiajs/react';

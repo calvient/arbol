@@ -14,8 +14,15 @@ This is a simple tool that solves 80% of a complex problem! So you may still wan
 ## Requirements
 
 - PHP 8.3+
-- Laravel 10, 11, 12, or 13
-- Inertia.js with React
+- Laravel 12 or 13
+- Inertia.js 3 with React 19
+
+When upgrading an existing application from Inertia 2, republish Inertia's configuration and clear compiled views as described in the [Inertia 3 upgrade guide](https://inertiajs.com/docs/v3/getting-started/upgrade-guide):
+
+```bash
+php artisan vendor:publish --provider="Inertia\ServiceProvider" --force
+php artisan view:clear
+```
 
 ## Installation
 

@@ -11,17 +11,15 @@ import {
   PopoverBody,
   PopoverContent,
   PopoverTrigger,
-  RepeatIcon,
-  SearchIcon,
   Text,
   VStack,
   Wrap,
   WrapItem,
-  ChevronDownIcon,
   Tag,
   TagLabel,
   TagCloseButton,
-} from '@calvient/decal';
+} from '@chakra-ui/react';
+import {ChevronDownIcon, RepeatIcon, SearchIcon} from '@chakra-ui/icons';
 
 interface ReportFilterBarProps {
   allFilters: Record<string, string[]>;
@@ -69,14 +67,7 @@ const ReportFilterBar: FC<ReportFilterBarProps> = ({
   const hasActiveFilters = selectedFilters.length > 0 || searchQuery.length > 0;
 
   return (
-    <Box
-      w='full'
-      p={4}
-      bg='white'
-      border='solid 1px'
-      borderColor='gray.200'
-      borderRadius='md'
-    >
+    <Box w='full' p={4} bg='white' border='solid 1px' borderColor='gray.200' borderRadius='md'>
       {/* Filters + search/refresh on same row, filters wrap as needed */}
       <HStack spacing={3} w='full' alignItems='flex-start'>
         <Wrap spacing={2} align='center' flex={1}>
@@ -85,88 +76,89 @@ const ReportFilterBar: FC<ReportFilterBarProps> = ({
               Filters:
             </Text>
           </WrapItem>
-        {filterGroups.map((group) => {
-          const selectedValues = getSelectedValuesForGroup(group);
-          const isActive = selectedValues.length > 0;
+          {filterGroups.map((group) => {
+            const selectedValues = getSelectedValuesForGroup(group);
+            const isActive = selectedValues.length > 0;
 
-          return (
-            <WrapItem key={group}>
-              <Popover placement='bottom-start' isLazy>
-                {({onClose}) => (
-                  <>
-                    <PopoverTrigger>
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        borderRadius='full'
-                        borderColor={isActive ? 'blue.300' : 'gray.200'}
-                        bg={isActive ? 'blue.50' : 'white'}
-                        color={isActive ? 'blue.700' : 'gray.700'}
-                        fontWeight='normal'
-                        rightIcon={<ChevronDownIcon />}
-                        _hover={{bg: isActive ? 'blue.100' : 'gray.50'}}
-                      >
-                        {group}
-                        {isActive && (
-                          <Tag size='sm' ml={1} borderRadius='full' colorScheme='blue' variant='solid'>
-                            <TagLabel>{selectedValues.length}</TagLabel>
-                          </Tag>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent minW='220px' maxH='300px' overflowY='auto' boxShadow='lg'>
-                      <PopoverBody py={2}>
-                        <VStack align='stretch' spacing={1}>
+            return (
+              <WrapItem key={group}>
+                <Popover placement='bottom-start' isLazy>
+                  {({onClose}) => (
+                    <>
+                      <PopoverTrigger>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          borderRadius='full'
+                          borderColor={isActive ? 'blue.300' : 'gray.200'}
+                          bg={isActive ? 'blue.50' : 'white'}
+                          color={isActive ? 'blue.700' : 'gray.700'}
+                          fontWeight='normal'
+                          rightIcon={<ChevronDownIcon />}
+                          _hover={{bg: isActive ? 'blue.100' : 'gray.50'}}
+                        >
+                          {group}
                           {isActive && (
-                            <Button
-                              size='xs'
-                              variant='ghost'
-                              colorScheme='red'
-                              alignSelf='flex-end'
-                              mb={1}
-                              onClick={() => {
-                                clearGroupFilters(group);
-                                onClose();
-                              }}
+                            <Tag
+                              size='sm'
+                              ml={1}
+                              borderRadius='full'
+                              colorScheme='blue'
+                              variant='solid'
                             >
-                              Clear
-                            </Button>
+                              <TagLabel>{selectedValues.length}</TagLabel>
+                            </Tag>
                           )}
-                          {allFilters[group].map((value) => (
-                            <Checkbox
-                              key={value}
-                              isChecked={selectedValues.includes(value)}
-                              onChange={() => toggleFilterValue(group, value)}
-                              px={2}
-                              py={1}
-                              borderRadius='md'
-                              _hover={{bg: 'gray.50'}}
-                            >
-                              <Text fontSize='sm'>{value}</Text>
-                            </Checkbox>
-                          ))}
-                        </VStack>
-                      </PopoverBody>
-                    </PopoverContent>
-                  </>
-                )}
-              </Popover>
-            </WrapItem>
-          );
-        })}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent minW='220px' maxH='300px' overflowY='auto' boxShadow='lg'>
+                        <PopoverBody py={2}>
+                          <VStack align='stretch' spacing={1}>
+                            {isActive && (
+                              <Button
+                                size='xs'
+                                variant='ghost'
+                                colorScheme='red'
+                                alignSelf='flex-end'
+                                mb={1}
+                                onClick={() => {
+                                  clearGroupFilters(group);
+                                  onClose();
+                                }}
+                              >
+                                Clear
+                              </Button>
+                            )}
+                            {allFilters[group].map((value) => (
+                              <Checkbox
+                                key={value}
+                                isChecked={selectedValues.includes(value)}
+                                onChange={() => toggleFilterValue(group, value)}
+                                px={2}
+                                py={1}
+                                borderRadius='md'
+                                _hover={{bg: 'gray.50'}}
+                              >
+                                <Text fontSize='sm'>{value}</Text>
+                              </Checkbox>
+                            ))}
+                          </VStack>
+                        </PopoverBody>
+                      </PopoverContent>
+                    </>
+                  )}
+                </Popover>
+              </WrapItem>
+            );
+          })}
 
-        {hasActiveFilters && (
-          <WrapItem>
-            <Button
-              size='sm'
-              variant='ghost'
-              colorScheme='red'
-              onClick={clearAllFilters}
-            >
-              Clear all
-            </Button>
-          </WrapItem>
-        )}
+          {hasActiveFilters && (
+            <WrapItem>
+              <Button size='sm' variant='ghost' colorScheme='red' onClick={clearAllFilters}>
+                Clear all
+              </Button>
+            </WrapItem>
+          )}
         </Wrap>
         <HStack spacing={3} flexShrink={0}>
           <InputGroup size='sm' maxW='250px'>
@@ -204,9 +196,7 @@ const ReportFilterBar: FC<ReportFilterBarProps> = ({
                   {filter.field}: {filter.value}
                 </TagLabel>
                 <TagCloseButton
-                  onClick={() =>
-                    onFiltersChange(selectedFilters.filter((_, i) => i !== index))
-                  }
+                  onClick={() => onFiltersChange(selectedFilters.filter((_, i) => i !== index))}
                 />
               </Tag>
             </WrapItem>

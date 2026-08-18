@@ -8,6 +8,7 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "types": ["vite/client"],
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -20,8 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "resources/ts"
-  ],
-  "references": [{ "path": "./tsconfig.node.json"}]
+  "include": ["resources/ts", "tests/ts"],
+  "references": [{"path": "./tsconfig.node.json"}]
 }

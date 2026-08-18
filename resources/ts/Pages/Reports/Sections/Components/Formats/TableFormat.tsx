@@ -1,4 +1,4 @@
-import {Box, Select, Table, Tbody, Td, Th, Thead, Tr} from '@calvient/decal';
+import {Box, Select, Table, Tbody, Td, Th, Thead, Tr} from '@chakra-ui/react';
 import React from 'react';
 import {
   createColumnHelper,
@@ -22,7 +22,13 @@ interface TableFormatProps {
   hideSliceSelector?: boolean;
 }
 
-const TableFormat = ({data, currentSlice, onSliceChange, searchQuery = '', hideSliceSelector = false}: TableFormatProps) => {
+const TableFormat = ({
+  data,
+  currentSlice,
+  onSliceChange,
+  searchQuery = '',
+  hideSliceSelector = false,
+}: TableFormatProps) => {
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -46,9 +52,7 @@ const TableFormat = ({data, currentSlice, onSliceChange, searchQuery = '', hideS
     if (!searchQuery) return sliceData;
     const query = searchQuery.toLowerCase();
     return sliceData.filter((row) =>
-      Object.values(row).some(
-        (val) => val != null && String(val).toLowerCase().includes(query),
-      ),
+      Object.values(row).some((val) => val != null && String(val).toLowerCase().includes(query)),
     );
   }, [data, activeSlice, searchQuery]);
 

@@ -106,10 +106,10 @@ At least one Series class must exist (e.g., `app/Arbol/MyDataSeries.php`).
 The embeddable component uses the same UI libraries as the full Arbol UI. Consumers must install these in their own `package.json`:
 
 ```bash
-npm install @calvient/decal recharts @tanstack/react-table
+npm install @chakra-ui/react @chakra-ui/icons @emotion/react @emotion/styled framer-motion react-is recharts @tanstack/react-table
 ```
 
-`@calvient/decal` wraps Chakra UI, so the consumer's app must have a `ChakraProvider` (or `DecalProvider`) at the root. If the consumer already uses Chakra UI or `@calvient/decal`, no extra setup is needed.
+The consumer's app must have a `ChakraProvider` at the root. If it already uses Chakra UI, no extra setup is needed.
 
 > **Note:** If the consumer's app does not use Chakra UI, they need to wrap the embedded section (or their app root) in a `ChakraProvider`. See [Component API > ChakraProvider Requirement](#chakaprovider-requirement).
 
@@ -359,7 +359,7 @@ The main embeddable component. It orchestrates config resolution, data fetching,
 
 ```tsx
 import React, {useEffect, useState, useCallback} from 'react';
-import {Box, Heading, Text, Button, HStack, Spacer, Spinner} from '@calvient/decal';
+import {Box, Heading, Text, Button, HStack, Spacer, Spinner} from '@chakra-ui/react';
 import {toQueryString} from '../Utils/toQueryString';
 import TableFormat from '../Pages/Reports/Sections/Components/Formats/TableFormat';
 import LineFormat from '../Pages/Reports/Sections/Components/Formats/LineFormat';
@@ -464,7 +464,7 @@ One small consideration: `TableFormat` accepts `currentSlice` and `onSliceChange
 If the consumer's app root does not have a `ChakraProvider`, they must wrap the embed:
 
 ```tsx
-import {ChakraProvider} from '@calvient/decal';
+import {ChakraProvider} from '@chakra-ui/react';
 import {ArbolEmbed} from 'calvient-arbol/embed';
 
 function MyPage() {
@@ -476,7 +476,7 @@ function MyPage() {
 }
 ```
 
-If the consumer already uses Chakra UI / `@calvient/decal`, no extra wrapping is needed.
+If the consumer already uses Chakra UI, no extra wrapping is needed.
 
 ---
 

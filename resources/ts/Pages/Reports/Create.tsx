@@ -1,4 +1,4 @@
-import {Button, FormControl, FormLabel, Input, Textarea, VStack, Text} from '@calvient/decal';
+import {Button, FormControl, FormLabel, Input, Textarea, VStack, Text} from '@chakra-ui/react';
 import Layout from '../../Components/Layout.tsx';
 import {useForm} from '@inertiajs/react';
 

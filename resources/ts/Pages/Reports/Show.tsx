@@ -3,7 +3,8 @@ import {Head, Link} from '@inertiajs/react';
 import React, {useCallback, useState} from 'react';
 import {User} from '../../Types/User.ts';
 import {Report} from '../../Types/Report.ts';
-import {AddIcon, Box, Center, HStack, Heading, Spacer, Text, VStack, Button} from '@calvient/decal';
+import {Box, Center, HStack, Heading, Spacer, Text, VStack, Button} from '@chakra-ui/react';
+import {AddIcon} from '@chakra-ui/icons';
 import ReportSection from './Sections/Components/ReportSection.tsx';
 import ReportFilterBar from '../../Components/ReportFilterBar.tsx';
 
@@ -15,7 +16,8 @@ interface ShowProps {
 }
 
 const Show = ({report, allFilters, defaultFilters = []}: ShowProps) => {
-  const [reportFilters, setReportFilters] = useState<Array<{field: string; value: string}>>(defaultFilters);
+  const [reportFilters, setReportFilters] =
+    useState<Array<{field: string; value: string}>>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [loadingSections, setLoadingSections] = useState<Record<number, boolean>>({});

@@ -9,7 +9,7 @@ import {
   HStack,
   RadioGroup,
   Radio,
-} from '@calvient/decal';
+} from '@chakra-ui/react';
 import Layout from '../../../Components/Layout.tsx';
 import {router, useForm} from '@inertiajs/react';
 import {Report} from '../../../Types/Report.ts';

@@ -631,7 +631,7 @@ When storing raw data, numeric group keys (e.g., location ID `24`) are cast to s
 
 ### Stack
 - React (via Inertia.js)
-- Chakra UI (via `@calvient/decal` wrapper)
+- Chakra UI
 - Recharts for charts
 - TanStack Table for sortable/paginated tables
 - TypeScript

@@ -1,10 +1,10 @@
-import {Box} from '@calvient/decal';
+import {Box} from '@chakra-ui/react';
 import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts';
 import {extractTruncationMeta} from '../../../../../Utils/chartTruncation';
 import TruncationWarning from './TruncationWarning';
 
 interface PieFormatProps {
-  data: Array<{name: string; value: number}>;
+  data: Array<Record<string, string | number>>;
 }
 
 const COLORS = ['#2B284D', '#6C6897', '#FFB700', '#FF6100', '#FF0080', '#F60950', '#0FD8F0'];

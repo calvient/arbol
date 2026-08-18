@@ -1,9 +1,9 @@
-import {As, Box, Center, HStack, Icon} from '@calvient/decal';
-import React from 'react';
+import {Box, Center, HStack, Icon} from '@chakra-ui/react';
+import React, {ElementType} from 'react';
 
 interface BoxSelectProps {
   value?: string;
-  options: {label: string; icon: As; value: string}[];
+  options: {label: string; icon: ElementType; value: string}[];
   onSelect: (value: string) => void;
 }
 

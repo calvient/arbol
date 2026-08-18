@@ -1,5 +1,5 @@
 import {Section} from '../../../../Types/Section.ts';
-import {Box, Button, HStack, Heading, Spacer, Text, Link as ChakraLink} from '@calvient/decal';
+import {Box, Button, HStack, Heading, Spacer, Text, Link as ChakraLink} from '@chakra-ui/react';
 import {toQueryString} from '../../../../Utils/toQueryString.ts';
 import TableFormat from './Formats/TableFormat.tsx';
 import PieFormat from './Formats/PieFormat.tsx';
@@ -19,7 +19,15 @@ interface ReportSectionProps {
   hasFilterBar?: boolean;
 }
 
-const ReportSection = ({report, section, reportFilters = [], searchQuery = '', refreshKey = 0, onLoadingChange, hasFilterBar = false}: ReportSectionProps) => {
+const ReportSection = ({
+  report,
+  section,
+  reportFilters = [],
+  searchQuery = '',
+  refreshKey = 0,
+  onLoadingChange,
+  hasFilterBar = false,
+}: ReportSectionProps) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,13 +37,13 @@ const ReportSection = ({report, section, reportFilters = [], searchQuery = '', r
 
   // For table sections with a filter bar, section.filters are report filter config (not hard restrictions)
   // Only report-level UI filters apply. For other formats, merge section + report filters.
-  const mergedFilters = hasFilterBar && section.format === 'table'
-    ? [...reportFilters]
-    : [...section.filters, ...reportFilters];
+  const mergedFilters =
+    hasFilterBar && section.format === 'table'
+      ? [...reportFilters]
+      : [...section.filters, ...reportFilters];
 
   // For tables, skip slicing when the filter bar is available (filters handle narrowing)
-  const effectiveSlice =
-    hasFilterBar && section.format === 'table' ? null : section.slice;
+  const effectiveSlice = hasFilterBar && section.format === 'table' ? null : section.slice;
 
   const loadData = async (forceRefresh: boolean = false) => {
     setIsLoading(true);
