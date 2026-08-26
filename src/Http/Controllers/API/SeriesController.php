@@ -214,13 +214,13 @@ class SeriesController extends Controller
         return $data;
     }
 
-    private function formatForChart(array $data, string $slice = '', string $aggregator = 'Default', ?string $percentageMode = null): array
+    private function formatForChart(array $data, ?string $slice = null, ?string $aggregator = null, ?string $percentageMode = null): array
     {
         $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
         $series = new $seriesInfo['class'];
         $slices = $series->slices();
         $aggregators = $series->aggregators();
-        $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];
+        $aggregatorFn = $aggregators[$aggregator ?? 'Default'] ?? $aggregators['Default'];
 
         // Compute all unique slice values ONCE before the loop (O(N) instead of O(N*M))
         $allSliceValues = [];
