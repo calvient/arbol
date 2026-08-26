@@ -181,6 +181,47 @@ test('csv download does not produce fputcsv escape deprecation warnings', functi
     expect(true)->toBeTrue();
 });
 
+test('chart csv download accepts omitted and legacy null parameters', function (array $parameters) {
+    $user = createTestUser();
+    $report = ArbolReport::factory()->create(['author_id' => $user->id]);
+    $section = ArbolSection::factory()->create([
+        'arbol_report_id' => $report->id,
+        'series' => 'Test Series',
+        'format' => 'bar',
+    ]);
+
+    $arbolService = app(ArbolService::class);
+    $arbolService->storeDataInCache($section, [
+        'All' => [
+            ['name' => 'Alice', 'state' => 'CA'],
+        ],
+    ]);
+
+    set_error_handler(function ($severity, $message) {
+        throw new \ErrorException($message, 0, $severity);
+    }, E_WARNING | E_DEPRECATED);
+
+    try {
+        $response = $this->actingAs($user)->get('/arbol/series-data/download?'.http_build_query([
+            'section_id' => $section->id,
+            'series' => 'Test Series',
+            'format' => 'bar',
+            ...$parameters,
+        ]));
+
+        $response->assertOk();
+    } finally {
+        restore_error_handler();
+    }
+})->with([
+    'omitted nullable parameters' => [[]],
+    'legacy null parameters' => [[
+        'slice' => 'null',
+        'xaxis_slice' => 'null',
+        'percentage_mode' => 'null',
+    ]],
+]);
+
 test('csv download formats numeric values with commas', function () {
     $user = createTestUser();
     $report = ArbolReport::factory()->create(['author_id' => $user->id]);

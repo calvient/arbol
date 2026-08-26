@@ -16,8 +16,7 @@ class SeriesController extends Controller
 
     public function getSeriesData(): JsonResponse
     {
-        // Normalize percentage_mode: treat empty strings and "null" as actual null
-        $this->normalizePercentageMode();
+        $this->normalizeNullableParameters();
 
         // Validate the request inputs
         $validator = Validator::make(request()->all(), [
@@ -158,8 +157,7 @@ class SeriesController extends Controller
 
     public function downloadData()
     {
-        // Normalize percentage_mode: treat empty strings and "null" as actual null
-        $this->normalizePercentageMode();
+        $this->normalizeNullableParameters();
 
         // Validate the request inputs
         $validator = Validator::make(request()->all(), [
@@ -216,13 +214,13 @@ class SeriesController extends Controller
         return $data;
     }
 
-    private function formatForChart(array $data, string $slice = '', string $aggregator = 'Default', ?string $percentageMode = null): array
+    private function formatForChart(array $data, ?string $slice = null, ?string $aggregator = null, ?string $percentageMode = null): array
     {
         $seriesInfo = $this->arbolService->getSeriesByName(request('series'));
         $series = new $seriesInfo['class'];
         $slices = $series->slices();
         $aggregators = $series->aggregators();
-        $aggregatorFn = $aggregators[$aggregator] ?? $aggregators['Default'];
+        $aggregatorFn = $aggregators[$aggregator ?? 'Default'] ?? $aggregators['Default'];
 
         // Compute all unique slice values ONCE before the loop (O(N) instead of O(N*M))
         $allSliceValues = [];
@@ -450,11 +448,12 @@ class SeriesController extends Controller
         return $flattenedData;
     }
 
-    private function normalizePercentageMode(): void
+    private function normalizeNullableParameters(): void
     {
-        $value = request('percentage_mode');
-        if ($value === 'null' || $value === '') {
-            request()->merge(['percentage_mode' => null]);
+        foreach (['slice', 'xaxis_slice', 'percentage_mode'] as $parameter) {
+            if (in_array(request($parameter), ['null', ''], true)) {
+                request()->merge([$parameter => null]);
+            }
         }
     }
 
