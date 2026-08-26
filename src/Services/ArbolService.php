@@ -20,16 +20,7 @@ class ArbolService
 
         foreach ($classes as $class) {
             $seriesInstance = new $class;
-            $series[] = [
-                'class' => $class,
-                'name' => $seriesInstance->name(),
-                'description' => $seriesInstance->description(),
-                'slices' => array_keys($seriesInstance->slices()),
-                'filters' => collect($seriesInstance->filters())->mapWithKeys(function ($filters, $key) {
-                    return [$key => array_keys($filters)];
-                })->toArray(),
-                'aggregators' => array_keys($seriesInstance->aggregators()),
-            ];
+            $series[] = $this->getSeriesMetadata($class, $seriesInstance);
         }
 
         return $series;
@@ -37,15 +28,28 @@ class ArbolService
 
     public function getSeriesByName(string $name): ?array
     {
-        $allSeries = $this->getSeries();
-
-        foreach ($allSeries as $series) {
-            if ($series['name'] === $name) {
-                return $series;
+        foreach ($this->getSeriesClasses() as $class) {
+            $seriesInstance = new $class;
+            if ($seriesInstance->name() === $name) {
+                return $this->getSeriesMetadata($class, $seriesInstance);
             }
         }
 
         return null;
+    }
+
+    private function getSeriesMetadata(string $class, IArbolSeries $series): array
+    {
+        return [
+            'class' => $class,
+            'name' => $series->name(),
+            'description' => $series->description(),
+            'slices' => array_keys($series->slices()),
+            'filters' => collect($series->filters())->mapWithKeys(function ($filters, $key) {
+                return [$key => array_keys($filters)];
+            })->toArray(),
+            'aggregators' => array_keys($series->aggregators()),
+        ];
     }
 
     public function getSeriesClassByName(string $name)
