@@ -166,6 +166,9 @@ class SeriesController extends Controller
             'slice' => 'nullable|string',
             'xaxis_slice' => 'nullable|string',
             'aggregator' => 'nullable|string',
+            'filters' => 'nullable|array',
+            'filters.*.field' => 'required|string',
+            'filters.*.value' => 'required|string',
             'format' => 'required|string',
             'percentage_mode' => 'nullable|string|in:xaxis_group,total',
             'slice_key' => 'nullable|string',
@@ -185,9 +188,13 @@ class SeriesController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        $filters = request('filters', []);
+        $filterHash = ! empty($filters) ? ArbolService::computeFilterHash($filters) : null;
+
         // Get the cached data (avoids timeout issues with large datasets)
         $data = $this->arbolService->getDataFromCache(
-            arbolSection: $section
+            arbolSection: $section,
+            filterHash: $filterHash,
         );
         if (! $data) {
             abort(404, 'Data not found. Please view the report first to generate the data.');
