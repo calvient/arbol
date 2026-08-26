@@ -102,6 +102,42 @@ test('csv download contains correct headers and data', function () {
     expect($row2)->toContain('All', 'Bob', 'NY');
 });
 
+test('csv download reads data from the filter-scoped cache', function () {
+    $user = createTestUser();
+    $report = ArbolReport::factory()->create(['author_id' => $user->id]);
+    $section = ArbolSection::factory()->create([
+        'arbol_report_id' => $report->id,
+        'series' => 'Test Series',
+        'format' => 'table',
+    ]);
+    $filters = [
+        ['field' => 'Remaining Balance', 'value' => 'Greater Than 0'],
+        ['field' => 'Balance Age', 'value' => 'Older Than 90 Days'],
+    ];
+
+    $arbolService = app(ArbolService::class);
+    $arbolService->storeDataInCache(
+        $section,
+        ['All' => [['name' => 'Filtered encounter', 'state' => 'CA']]],
+        ArbolService::computeFilterHash($filters),
+    );
+
+    $response = $this->actingAs($user)->get('/arbol/series-data/download?'.http_build_query([
+        'section_id' => $section->id,
+        'series' => 'Test Series',
+        'filters' => $filters,
+        'format' => 'table',
+    ]));
+
+    $response->assertOk();
+
+    ob_start();
+    $response->sendContent();
+    $content = ob_get_clean();
+
+    expect($content)->toContain('Filtered encounter');
+});
+
 test('csv download handles special characters correctly', function () {
     $user = createTestUser();
     $report = ArbolReport::factory()->create(['author_id' => $user->id]);
@@ -158,7 +194,7 @@ test('csv download does not produce fputcsv escape deprecation warnings', functi
 
     // Convert warnings to exceptions so the test fails if any occur
     set_error_handler(function ($severity, $message) {
-        throw new \ErrorException($message, 0, $severity);
+        throw new ErrorException($message, 0, $severity);
     }, E_WARNING | E_DEPRECATED);
 
     try {
@@ -198,7 +234,7 @@ test('chart csv download accepts omitted and legacy null parameters', function (
     ]);
 
     set_error_handler(function ($severity, $message) {
-        throw new \ErrorException($message, 0, $severity);
+        throw new ErrorException($message, 0, $severity);
     }, E_WARNING | E_DEPRECATED);
 
     try {
