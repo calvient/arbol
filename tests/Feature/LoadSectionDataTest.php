@@ -65,6 +65,26 @@ test('it applies slice when loading data', function () {
         ->and($data)->toHaveKeys(['CA', 'NY', 'TX', 'FL']);
 });
 
+test('it groups data under All when the requested slice does not exist', function () {
+    $section = ArbolSection::factory()->withSeries('Test Series')->create();
+
+    $job = new LoadSectionData(
+        arbolSection: $section,
+        series: 'Test Series',
+        filters: [],
+        slice: 'null',
+        user: null,
+    );
+
+    $arbolService = app(ArbolService::class);
+    $job->handle($arbolService);
+
+    $data = $arbolService->getDataFromCache($section);
+
+    expect($data)->toHaveKey('All')
+        ->and($data['All'])->toHaveCount(4);
+});
+
 test('it sets running flag during execution', function () {
     $section = ArbolSection::factory()->withSeries('Test Series')->create();
     $arbolService = app(ArbolService::class);

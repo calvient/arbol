@@ -16,8 +16,7 @@ class SeriesController extends Controller
 
     public function getSeriesData(): JsonResponse
     {
-        // Normalize percentage_mode: treat empty strings and "null" as actual null
-        $this->normalizePercentageMode();
+        $this->normalizeNullableParameters();
 
         // Validate the request inputs
         $validator = Validator::make(request()->all(), [
@@ -158,8 +157,7 @@ class SeriesController extends Controller
 
     public function downloadData()
     {
-        // Normalize percentage_mode: treat empty strings and "null" as actual null
-        $this->normalizePercentageMode();
+        $this->normalizeNullableParameters();
 
         // Validate the request inputs
         $validator = Validator::make(request()->all(), [
@@ -450,11 +448,12 @@ class SeriesController extends Controller
         return $flattenedData;
     }
 
-    private function normalizePercentageMode(): void
+    private function normalizeNullableParameters(): void
     {
-        $value = request('percentage_mode');
-        if ($value === 'null' || $value === '') {
-            request()->merge(['percentage_mode' => null]);
+        foreach (['slice', 'xaxis_slice', 'percentage_mode'] as $parameter) {
+            if (in_array(request($parameter), ['null', ''], true)) {
+                request()->merge([$parameter => null]);
+            }
         }
     }
 

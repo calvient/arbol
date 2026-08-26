@@ -131,7 +131,7 @@ class LoadSectionData implements ShouldBeUnique, ShouldQueue
             }
         }
 
-        return $data;
+        return $data->groupBy(fn () => 'All');
     }
 
     protected function formatData(array $data, IArbolSeries $seriesInstance): array

@@ -148,7 +148,7 @@ test('controller returns 202 and dispatches job when raw cache exists but format
 
     // Do NOT store formatted cache — this simulates the missing formatted cache scenario
 
-    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?' . http_build_query([
+    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?'.http_build_query([
         'section_id' => $section->id,
         'series' => 'Test Series',
         'format' => 'bar',
@@ -176,7 +176,7 @@ test('controller returns formatted data directly when formatted cache exists for
     $formattedData = [['name' => 'CA', 'value' => 1.0]];
     $arbolService->storeFormattedDataInCache($section, $formattedData);
 
-    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?' . http_build_query([
+    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?'.http_build_query([
         'section_id' => $section->id,
         'series' => 'Test Series',
         'format' => 'bar',
@@ -198,7 +198,7 @@ test('controller returns table data inline when raw cache exists for table forma
     $rawData = ['All' => [['name' => 'Test 1', 'state' => 'CA', 'value' => 100]]];
     $arbolService->storeDataInCache($section, collect($rawData));
 
-    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?' . http_build_query([
+    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?'.http_build_query([
         'section_id' => $section->id,
         'series' => 'Test Series',
         'format' => 'table',
@@ -214,7 +214,7 @@ test('controller returns 202 when no cache exists at all', function () {
     $user = createTestUser();
     $section = ArbolSection::factory()->withSeries('Test Series')->create();
 
-    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?' . http_build_query([
+    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?'.http_build_query([
         'section_id' => $section->id,
         'series' => 'Test Series',
         'format' => 'table',
@@ -223,6 +223,28 @@ test('controller returns 202 when no cache exists at all', function () {
     // Should dispatch job and return 202
     $response->assertStatus(202);
     Queue::assertPushed(LoadSectionData::class);
+});
+
+test('controller normalizes null string slice parameters before dispatching the job', function () {
+    Queue::fake();
+
+    $user = createTestUser();
+    $section = ArbolSection::factory()->withSeries('Test Series')->create();
+
+    $response = $this->actingAs($user)->getJson('/api/arbol/series-data?'.http_build_query([
+        'section_id' => $section->id,
+        'series' => 'Test Series',
+        'format' => 'table',
+        'slice' => 'null',
+        'xaxis_slice' => 'null',
+    ]));
+
+    $response->assertStatus(202);
+
+    Queue::assertPushed(
+        LoadSectionData::class,
+        fn (LoadSectionData $job) => $job->slice === null,
+    );
 });
 
 /*
