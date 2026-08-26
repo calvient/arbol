@@ -31,18 +31,18 @@ class ArbolService
         foreach ($this->getSeriesClasses() as $class) {
             $seriesInstance = new $class;
             if ($seriesInstance->name() === $name) {
-                return $this->getSeriesMetadata($class, $seriesInstance);
+                return $this->getSeriesMetadata($class, $seriesInstance, $name);
             }
         }
 
         return null;
     }
 
-    private function getSeriesMetadata(string $class, IArbolSeries $series): array
+    private function getSeriesMetadata(string $class, IArbolSeries $series, ?string $resolvedName = null): array
     {
         return [
             'class' => $class,
-            'name' => $series->name(),
+            'name' => $resolvedName ?? $series->name(),
             'description' => $series->description(),
             'slices' => array_keys($series->slices()),
             'filters' => collect($series->filters())->mapWithKeys(function ($filters, $key) {

@@ -55,7 +55,7 @@ jobs:
       matrix:
         laravel: ['^12.0@stable', '^13.0@stable']
     env:
-      COMPAT_DIR: ${{ runner.temp }}/arbol-consumer
+      COMPAT_DIR: ${{ github.workspace }}/../arbol-consumer
 
     name: Consumer install / Laravel ${{ matrix.laravel }}
 
