@@ -8,8 +8,12 @@ use Carbon\Carbon;
 
 class TestSeries implements IArbolSeries
 {
+    public static int $nameCalls = 0;
+
     public function name(): string
     {
+        self::$nameCalls++;
+
         return 'Test Series';
     }
 

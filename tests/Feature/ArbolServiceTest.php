@@ -2,6 +2,8 @@
 
 use Calvient\Arbol\Models\ArbolSection;
 use Calvient\Arbol\Services\ArbolService;
+use Calvient\Arbol\Tests\Series\TestSeries;
+use Calvient\Arbol\Tests\Series\UnrelatedTestSeries;
 use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
@@ -11,14 +13,15 @@ beforeEach(function () {
 test('it gets all series', function () {
     $service = new ArbolService;
     $series = $service->getSeries();
+    $testSeries = collect($series)->firstWhere('name', 'Test Series');
 
-    expect($series)->toHaveCount(1)
-        ->and($series[0])->toBeArray()
-        ->and($series[0])->toHaveKeys(['name', 'description', 'slices', 'filters', 'aggregators'])
-        ->and($series[0]['name'])->toBe('Test Series')
-        ->and($series[0]['description'])->toBe('Test Series Description')
-        ->and($series[0]['slices'])->toContain('State', 'City')
-        ->and($series[0]['aggregators'])->toContain('Default', 'Sum', 'Average');
+    expect($series)->toHaveCount(2)
+        ->and($testSeries)->toBeArray()
+        ->and($testSeries)->toHaveKeys(['name', 'description', 'slices', 'filters', 'aggregators'])
+        ->and($testSeries['name'])->toBe('Test Series')
+        ->and($testSeries['description'])->toBe('Test Series Description')
+        ->and($testSeries['slices'])->toContain('State', 'City')
+        ->and($testSeries['aggregators'])->toContain('Default', 'Sum', 'Average');
 });
 
 test('it throws an exception if the directory is invalid', function () {
@@ -28,12 +31,24 @@ test('it throws an exception if the directory is invalid', function () {
 })->throws(InvalidArgumentException::class);
 
 test('it gets series by name', function () {
+    TestSeries::$nameCalls = 0;
+    UnrelatedTestSeries::$filterCalls = 0;
+
     $service = new ArbolService;
     $series = $service->getSeriesByName('Test Series');
 
     expect($series)->toBeArray()
+        ->and($series)->toHaveKeys(['class', 'name', 'description', 'slices', 'filters', 'aggregators'])
+        ->and($series['class'])->toBe(TestSeries::class)
         ->and($series['name'])->toBe('Test Series')
-        ->and($series['description'])->toBe('Test Series Description');
+        ->and($series['description'])->toBe('Test Series Description')
+        ->and($series['slices'])->toContain('State', 'City')
+        ->and($series['filters'])->toBe([
+            'dob' => ['Before 1990', 'After 1990'],
+        ])
+        ->and($series['aggregators'])->toContain('Default', 'Sum', 'Average')
+        ->and(TestSeries::$nameCalls)->toBe(1)
+        ->and(UnrelatedTestSeries::$filterCalls)->toBe(0);
 });
 
 test('it returns null for non-existent series name', function () {
@@ -47,7 +62,7 @@ test('it gets series class by name', function () {
     $service = new ArbolService;
     $class = $service->getSeriesClassByName('Test Series');
 
-    expect($class)->toBe(\Calvient\Arbol\Tests\Series\TestSeries::class);
+    expect($class)->toBe(TestSeries::class);
 });
 
 test('it returns null for non-existent series class', function () {

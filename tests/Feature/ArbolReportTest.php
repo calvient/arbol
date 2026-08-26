@@ -2,7 +2,10 @@
 
 use Calvient\Arbol\Models\ArbolReport;
 use Calvient\Arbol\Models\ArbolSection;
+use Calvient\Arbol\Services\ArbolService;
 use Inertia\Testing\AssertableInertia as Assert;
+
+use function Pest\Laravel\mock;
 
 test('it returns an Inertia v3 response for the reports index', function () {
     $user = createTestUser();
@@ -15,6 +18,50 @@ test('it returns an Inertia v3 response for the reports index', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Reports/Index')
             ->has('reports', 1)
+        );
+});
+
+test('it does not load series metadata when table sections have no report filters', function () {
+    $user = createTestUser(['client_id' => 1]);
+    $report = ArbolReport::factory()->forAuthor($user->id)->forClient(1)->create();
+    ArbolSection::factory()->forReport($report)->asTable()->withFilters([])->create();
+
+    mock(ArbolService::class)->shouldNotReceive('getSeriesByName');
+
+    $this->actingAs($user)
+        ->get("/arbol/reports/{$report->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Reports/Show')
+            ->where('allFilters', [])
+            ->where('defaultFilters', [])
+        );
+});
+
+test('it loads series metadata for configured table filters', function () {
+    $user = createTestUser(['client_id' => 1]);
+    $report = ArbolReport::factory()->forAuthor($user->id)->forClient(1)->create();
+    ArbolSection::factory()->forReport($report)->asTable()->withFilters([
+        ['field' => 'Status', 'value' => 'Open'],
+    ])->create();
+
+    mock(ArbolService::class)
+        ->shouldReceive('getSeriesByName')
+        ->once()
+        ->with('Test Series')
+        ->andReturn([
+            'filters' => [
+                'Status' => ['Open', 'Closed'],
+            ],
+        ]);
+
+    $this->actingAs($user)
+        ->get("/arbol/reports/{$report->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Reports/Show')
+            ->where('allFilters', ['Status' => ['Open', 'Closed']])
+            ->where('defaultFilters', [['field' => 'Status', 'value' => 'Open']])
         );
 });
 

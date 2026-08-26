@@ -49,7 +49,7 @@ class ReportsController extends Controller
         $defaultFilters = [];
 
         foreach ($report->sections as $section) {
-            if ($section->format !== 'table') {
+            if ($section->format !== 'table' || empty($section->filters)) {
                 continue;
             }
 
