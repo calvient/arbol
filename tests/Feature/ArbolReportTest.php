@@ -34,24 +34,30 @@ test('it does not load series metadata when table sections have no report filter
         ->assertInertia(fn (Assert $page) => $page
             ->component('Reports/Show')
             ->where('allFilters', [])
-            ->where('defaultFilters', [])
+            ->missing('defaultFilters')
         );
 });
 
-test('it loads series metadata for configured table filters', function () {
+test('it exposes filter options without combining saved section defaults', function () {
     $user = createTestUser(['client_id' => 1]);
     $report = ArbolReport::factory()->forAuthor($user->id)->forClient(1)->create();
     ArbolSection::factory()->forReport($report)->asTable()->withFilters([
-        ['field' => 'Status', 'value' => 'Open'],
-    ])->create();
+        ['field' => 'Date Range', 'value' => 'This Month'],
+    ])->withSequence(1)->create();
+    ArbolSection::factory()->forReport($report)->asTable()->withFilters([
+        ['field' => 'Date Range', 'value' => 'Last Month'],
+        ['field' => 'Survey Answer', 'value' => 'Yes'],
+        ['field' => 'Survey Answer', 'value' => 'No'],
+    ])->withSequence(2)->create();
 
     mock(ArbolService::class)
         ->shouldReceive('getSeriesByName')
-        ->once()
+        ->twice()
         ->with('Test Series')
         ->andReturn([
             'filters' => [
-                'Status' => ['Open', 'Closed'],
+                'Date Range' => ['This Month', 'Last Month'],
+                'Survey Answer' => ['Yes', 'No'],
             ],
         ]);
 
@@ -60,8 +66,19 @@ test('it loads series metadata for configured table filters', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Reports/Show')
-            ->where('allFilters', ['Status' => ['Open', 'Closed']])
-            ->where('defaultFilters', [['field' => 'Status', 'value' => 'Open']])
+            ->where('allFilters', [
+                'Date Range' => ['This Month', 'Last Month'],
+                'Survey Answer' => ['Yes', 'No'],
+            ])
+            ->where('report.sections.0.filters', [
+                ['field' => 'Date Range', 'value' => 'This Month'],
+            ])
+            ->where('report.sections.1.filters', [
+                ['field' => 'Date Range', 'value' => 'Last Month'],
+                ['field' => 'Survey Answer', 'value' => 'Yes'],
+                ['field' => 'Survey Answer', 'value' => 'No'],
+            ])
+            ->missing('defaultFilters')
         );
 });
 

@@ -138,6 +138,52 @@ test('csv download reads data from the filter-scoped cache', function () {
     expect($content)->toContain('Filtered encounter');
 });
 
+test('csv download returns not found when cached data is absent', function () {
+    $user = createTestUser();
+    $report = ArbolReport::factory()->create(['author_id' => $user->id]);
+    $section = ArbolSection::factory()->create([
+        'arbol_report_id' => $report->id,
+        'series' => 'Test Series',
+        'format' => 'table',
+    ]);
+
+    $this->actingAs($user)->get('/arbol/series-data/download?'.http_build_query([
+        'section_id' => $section->id,
+        'series' => 'Test Series',
+        'format' => 'table',
+    ]))->assertNotFound();
+});
+
+test('csv download accepts an empty cached result', function (array $viewParameters) {
+    $user = createTestUser();
+    $report = ArbolReport::factory()->create(['author_id' => $user->id]);
+    $section = ArbolSection::factory()->create([
+        'arbol_report_id' => $report->id,
+        'series' => 'Test Series',
+        'format' => 'table',
+    ]);
+
+    app(ArbolService::class)->storeDataInCache($section, []);
+
+    $response = $this->actingAs($user)->get('/arbol/series-data/download?'.http_build_query([
+        'section_id' => $section->id,
+        'series' => 'Test Series',
+        'format' => 'table',
+        ...$viewParameters,
+    ]));
+
+    $response->assertOk()->assertDownload('data.csv');
+
+    ob_start();
+    $response->sendContent();
+    $content = ob_get_clean();
+
+    expect($content)->toStartWith("\xEF\xBB\xBF");
+})->with([
+    'download view' => [['slice_key' => 'All']],
+    'download all' => [[]],
+]);
+
 test('csv download handles special characters correctly', function () {
     $user = createTestUser();
     $report = ArbolReport::factory()->create(['author_id' => $user->id]);

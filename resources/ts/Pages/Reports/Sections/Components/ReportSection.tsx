@@ -1,4 +1,4 @@
-import {Section} from '../../../../Types/Section.ts';
+import {Section, SectionFilter} from '../../../../Types/Section.ts';
 import {Box, Button, HStack, Heading, Spacer, Text, Link as ChakraLink} from '@chakra-ui/react';
 import {toQueryString} from '../../../../Utils/toQueryString.ts';
 import TableFormat from './Formats/TableFormat.tsx';
@@ -8,11 +8,12 @@ import {Report} from '../../../../Types/Report.ts';
 import LineFormat from './Formats/LineFormat.tsx';
 import BarFormat from './Formats/BarFormat.tsx';
 import {useEffect, useState} from 'react';
+import {mergeSectionFilters} from './mergeSectionFilters.ts';
 
 interface ReportSectionProps {
   report: Report;
   section: Section;
-  reportFilters?: Array<{field: string; value: string}>;
+  reportFilters?: SectionFilter[];
   searchQuery?: string;
   refreshKey?: number;
   onLoadingChange?: (sectionId: number, loading: boolean) => void;
@@ -35,12 +36,11 @@ const ReportSection = ({
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [currentSlice, setCurrentSlice] = useState<string | null>(null);
 
-  // For table sections with a filter bar, section.filters are report filter config (not hard restrictions)
-  // Only report-level UI filters apply. For other formats, merge section + report filters.
+  // Report filters override matching table-section defaults without leaking into sibling sections.
   const mergedFilters =
     hasFilterBar && section.format === 'table'
-      ? [...reportFilters]
-      : [...section.filters, ...reportFilters];
+      ? mergeSectionFilters(section.filters, reportFilters)
+      : [...(section.filters ?? []), ...reportFilters];
 
   // For tables, skip slicing when the filter bar is available (filters handle narrowing)
   const effectiveSlice = hasFilterBar && section.format === 'table' ? null : section.slice;
