@@ -19,6 +19,22 @@ interface ReportSectionProps {
   hasFilterBar?: boolean;
 }
 
+type Filter = Section['filters'][number];
+
+export const mergeSectionFilters = (
+  sectionFilters: Filter[],
+  reportFilters: Filter[],
+): Filter[] => {
+  const sectionFields = new Set(sectionFilters.map((filter) => filter.field));
+  const applicableReportFilters = reportFilters.filter((filter) => sectionFields.has(filter.field));
+  const overriddenFields = new Set(applicableReportFilters.map((filter) => filter.field));
+
+  return [
+    ...sectionFilters.filter((filter) => !overriddenFields.has(filter.field)),
+    ...applicableReportFilters,
+  ];
+};
+
 const ReportSection = ({
   report,
   section,
@@ -35,11 +51,10 @@ const ReportSection = ({
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [currentSlice, setCurrentSlice] = useState<string | null>(null);
 
-  // For table sections with a filter bar, section.filters are report filter config (not hard restrictions)
-  // Only report-level UI filters apply. For other formats, merge section + report filters.
+  // Report filters override matching table-section defaults without leaking into sibling sections.
   const mergedFilters =
     hasFilterBar && section.format === 'table'
-      ? [...reportFilters]
+      ? mergeSectionFilters(section.filters, reportFilters)
       : [...section.filters, ...reportFilters];
 
   // For tables, skip slicing when the filter bar is available (filters handle narrowing)

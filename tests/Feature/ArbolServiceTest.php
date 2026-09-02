@@ -87,6 +87,17 @@ test('it stores and retrieves data from cache', function () {
     expect($retrieved)->toBe($data);
 });
 
+test('it distinguishes an empty cached result from a cache miss', function () {
+    $service = new ArbolService;
+    $cachedSection = ArbolSection::factory()->create();
+    $missingSection = ArbolSection::factory()->create();
+
+    $service->storeDataInCache($cachedSection, []);
+
+    expect($service->getDataFromCache($cachedSection))->toBe([])
+        ->and($service->getDataFromCache($missingSection))->toBeNull();
+});
+
 test('it stores and retrieves formatted data from cache', function () {
     $service = new ArbolService;
     $section = ArbolSection::factory()->create();

@@ -12,12 +12,10 @@ interface ShowProps {
   report: Report;
   users: User[];
   allFilters: Record<string, string[]>;
-  defaultFilters?: Array<{field: string; value: string}>;
 }
 
-const Show = ({report, allFilters, defaultFilters = []}: ShowProps) => {
-  const [reportFilters, setReportFilters] =
-    useState<Array<{field: string; value: string}>>(defaultFilters);
+const Show = ({report, allFilters}: ShowProps) => {
+  const [reportFilters, setReportFilters] = useState<Array<{field: string; value: string}>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [loadingSections, setLoadingSections] = useState<Record<number, boolean>>({});

@@ -196,7 +196,7 @@ class SeriesController extends Controller
             arbolSection: $section,
             filterHash: $filterHash,
         );
-        if (! $data) {
+        if (is_null($data)) {
             abort(404, 'Data not found. Please view the report first to generate the data.');
         }
 
