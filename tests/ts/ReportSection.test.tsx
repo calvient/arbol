@@ -1,10 +1,9 @@
 import {render, screen, waitFor} from '@testing-library/react';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import ReportSection from '../../resources/ts/Pages/Reports/Sections/Components/ReportSection';
+import {mergeSectionFilters} from '../../resources/ts/Pages/Reports/Sections/Components/mergeSectionFilters';
 import {Report} from '../../resources/ts/Types/Report';
-import {Section} from '../../resources/ts/Types/Section';
-
-type Filter = Section['filters'][number];
+import {Section, SectionFilter} from '../../resources/ts/Types/Section';
 
 const report: Report = {
   id: 1,
@@ -15,7 +14,7 @@ const report: Report = {
   updated_at: '',
 };
 
-const section = (id: number, filters: Filter[]): Section => ({
+const section = (id: number, filters: SectionFilter[] | null): Section => ({
   id,
   name: `Section ${id}`,
   series: 'Test Series',
@@ -25,8 +24,8 @@ const section = (id: number, filters: Filter[]): Section => ({
   sequence: id,
 });
 
-const filtersFromUrl = (url: string): Filter[] => {
-  const filters = new Map<number, Partial<Filter>>();
+const filtersFromUrl = (url: string): SectionFilter[] => {
+  const filters = new Map<number, Partial<SectionFilter>>();
 
   for (const [key, value] of new URL(url, 'http://localhost').searchParams) {
     const match = key.match(/^filters\[(\d+)]\[(field|value)]$/);
@@ -36,7 +35,7 @@ const filtersFromUrl = (url: string): Filter[] => {
 
     const index = Number(match[1]);
     const filter = filters.get(index) ?? {};
-    filter[match[2] as keyof Filter] = value;
+    filter[match[2] as keyof SectionFilter] = value;
     filters.set(index, filter);
   }
 
@@ -91,6 +90,35 @@ describe('ReportSection filters', () => {
 
     expect(filtersFromUrl(requestUrlForSection(fetchMock, 1))).toEqual(firstSection.filters);
     expect(filtersFromUrl(requestUrlForSection(fetchMock, 2))).toEqual(secondSection.filters);
+  });
+
+  it('omits optional filter configuration without a default value', async () => {
+    const fetchMock = successfulFetch();
+
+    render(
+      <ReportSection
+        report={report}
+        section={section(1, [{field: 'Status', value: ''}])}
+        hasFilterBar
+      />,
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    expect(filtersFromUrl(requestUrlForSection(fetchMock, 1))).toEqual([]);
+    expect(
+      mergeSectionFilters([{field: 'Status', value: ''}], [{field: 'Status', value: 'Open'}]),
+    ).toEqual([{field: 'Status', value: 'Open'}]);
+  });
+
+  it('normalizes nullable persisted section filters', async () => {
+    const fetchMock = successfulFetch();
+
+    render(<ReportSection report={report} section={section(1, null)} hasFilterBar />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    expect(filtersFromUrl(requestUrlForSection(fetchMock, 1))).toEqual([]);
   });
 
   it('overrides matching defaults while retaining unrelated defaults and multiple values', async () => {

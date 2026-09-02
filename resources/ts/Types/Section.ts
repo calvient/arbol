@@ -1,3 +1,5 @@
+export type SectionFilter = {field: string; value: string};
+
 export type Section = {
   id?: number;
   name: string;
@@ -9,7 +11,7 @@ export type Section = {
   xaxis_slice?: string;
   aggregator?: string;
   percentage_mode?: string | null;
-  filters: Array<{field: string; value: string}>;
+  filters: SectionFilter[] | null;
   format: string;
   sequence: number;
 };

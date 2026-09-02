@@ -80,10 +80,10 @@ Example stored data:
 ]
 ```
 
-- `Assignee` and `Tasklist` have empty values: they appear in the filter bar with no default selected.
-- `Status` has `"Open"` as its value: it appears in the filter bar with "Open" pre-selected as a default.
+- `Assignee` and `Tasklist` have empty values: they appear in the filter bar but do not add a filter until the user selects a value.
+- `Status` has `"Open"` as its value: that table section initially loads with `Status=Open` as its own saved default.
 
-**These are never sent to the API as hard restrictions.** They only configure the UI.
+Configured fields and executable filters are kept separate. Empty configuration entries are never sent to the API. Non-empty defaults are sent only for their owning table section, and an explicit report-level selection replaces the saved default for sections that configure the same field.
 
 ### How This Works in Code
 
@@ -103,17 +103,23 @@ Example stored data:
   - Same group can be added multiple times with different values
   - Chips display only the value
 
-**`ReportSection.tsx`** — Filter merging logic:
+**`mergeSectionFilters.ts`** — Filter merging logic used by `ReportSection.tsx`:
 
 ```typescript
-// For table sections with a filter bar, section.filters are report filter config (not hard restrictions)
-// Only report-level UI filters apply. For other formats, merge section + report filters.
-const mergedFilters = hasFilterBar && section.format === 'table'
-  ? [...reportFilters]
-  : [...section.filters, ...reportFilters];
+const configuredFilters = sectionFilters ?? [];
+const sectionFields = new Set(configuredFilters.map((filter) => filter.field));
+const applicableReportFilters = reportFilters.filter((filter) => sectionFields.has(filter.field));
+const overriddenFields = new Set(applicableReportFilters.map((filter) => filter.field));
+
+return [
+  ...configuredFilters.filter(
+    (filter) => filter.value !== '' && !overriddenFields.has(filter.field),
+  ),
+  ...applicableReportFilters,
+];
 ```
 
-Table sections exclude `section.filters` from API calls entirely. Only filters selected in the report filter bar UI (`reportFilters`) are sent.
+The full configured list determines which report-level fields apply to the section. Only non-empty saved defaults enter the request, and report-level selections replace defaults field-by-field.
 
 ---
 
@@ -126,7 +132,7 @@ Table sections exclude `section.filters` from API calls entirely. Only filters s
 
 The report filter bar is a top-level UI element on the report show page. It only appears when table sections have configured report filters.
 
-### Backend: Building `allFilters` and `defaultFilters`
+### Backend: Building `allFilters`
 
 In `ReportsController::show()`, the controller iterates **only table sections** to build the filter bar configuration:
 
@@ -141,21 +147,18 @@ foreach ($report->sections as $section) {
     foreach ($section->filters ?? [] as $filter) {
         $group = $filter['field'];
         // Populate allFilters[group] with available values from the series
-        // Collect defaultFilters from entries with non-empty values
     }
 }
 ```
 
-Two arrays are passed to the frontend:
-- **`allFilters`**: `Record<string, string[]>` — filter groups and their available values
-- **`defaultFilters`**: `Array<{field, value}>` — pre-selected default filter values
+The controller passes **`allFilters`** (`Record<string, string[]>`) to the frontend. Saved defaults stay attached to each serialized section instead of being combined into a report-wide list.
 
 ### Frontend: Filter State Management
 
-In `Show.tsx`, the filter state is initialized with defaults:
+In `Show.tsx`, report-level selections start empty:
 
 ```typescript
-const [reportFilters, setReportFilters] = useState<Array<{field: string; value: string}>>(defaultFilters);
+const [reportFilters, setReportFilters] = useState<Array<{field: string; value: string}>>([]);
 ```
 
 The filter bar is only rendered when `allFilters` has entries:
@@ -166,11 +169,12 @@ const hasFilters = Object.keys(allFilters).length > 0;
 
 ### User Interaction Flow
 
-1. Page loads with defaults pre-selected in the filter bar
+1. Page loads with no report-wide selection; each table section applies only its own non-empty saved defaults
 2. User toggles filter values via dropdown popovers (multi-select checkboxes)
-3. User clicks **Refresh** to re-fetch data with the current filters
-4. Data is not auto-fetched on filter change—the refresh is manual
-5. The Refresh button is disabled while any section is loading
+3. User clicks **Refresh** to re-fetch data; selected values replace defaults only for sections that configure the matching field
+4. Clearing report-level selections and refreshing restores each section's saved defaults
+5. Data is not auto-fetched on filter change—the refresh is manual
+6. The Refresh button is disabled while any section is loading
 
 ### Filter Bar Components
 
@@ -269,13 +273,14 @@ This means:
 ### Table Section with Filter Bar
 
 ```
-Show.tsx (manages reportFilters state, initialized with defaultFilters)
+Show.tsx (manages reportFilters state, initially empty)
   -> ReportFilterBar (user selects filters, clicks Refresh)
     -> Show.tsx bumps refreshKey
       -> ReportSection (useEffect on refreshKey)
-        -> mergedFilters = [...reportFilters]  (section.filters excluded)
+        -> configured fields determine which reportFilters apply
+        -> non-empty section defaults remain unless their field is overridden
         -> effectiveSlice = null                (no slicing)
-        -> fetch(/api/arbol/series-data?filters=reportFilters&slice=null)
+        -> fetch(/api/arbol/series-data?filters=mergedFilters&slice=null)
           -> TableFormat (renders raw rows, search filtering, no slice dropdown)
 ```
 
@@ -296,7 +301,7 @@ Show.tsx
 
 | Aspect | Table Sections | Chart Sections (line/bar/pie) |
 |---|---|---|
-| `section.filters` meaning | Report filter bar config | Hard data restrictions |
+| `section.filters` meaning | Report filter bar config plus optional per-section defaults | Hard data restrictions |
 | Filter value required | No (optional default) | Yes |
 | Contributes to report filter bar | Yes | No |
 | Slice selector in editor | Hidden | Shown |

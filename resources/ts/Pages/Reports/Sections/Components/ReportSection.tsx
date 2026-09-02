@@ -1,4 +1,4 @@
-import {Section} from '../../../../Types/Section.ts';
+import {Section, SectionFilter} from '../../../../Types/Section.ts';
 import {Box, Button, HStack, Heading, Spacer, Text, Link as ChakraLink} from '@chakra-ui/react';
 import {toQueryString} from '../../../../Utils/toQueryString.ts';
 import TableFormat from './Formats/TableFormat.tsx';
@@ -8,32 +8,17 @@ import {Report} from '../../../../Types/Report.ts';
 import LineFormat from './Formats/LineFormat.tsx';
 import BarFormat from './Formats/BarFormat.tsx';
 import {useEffect, useState} from 'react';
+import {mergeSectionFilters} from './mergeSectionFilters.ts';
 
 interface ReportSectionProps {
   report: Report;
   section: Section;
-  reportFilters?: Array<{field: string; value: string}>;
+  reportFilters?: SectionFilter[];
   searchQuery?: string;
   refreshKey?: number;
   onLoadingChange?: (sectionId: number, loading: boolean) => void;
   hasFilterBar?: boolean;
 }
-
-type Filter = Section['filters'][number];
-
-export const mergeSectionFilters = (
-  sectionFilters: Filter[],
-  reportFilters: Filter[],
-): Filter[] => {
-  const sectionFields = new Set(sectionFilters.map((filter) => filter.field));
-  const applicableReportFilters = reportFilters.filter((filter) => sectionFields.has(filter.field));
-  const overriddenFields = new Set(applicableReportFilters.map((filter) => filter.field));
-
-  return [
-    ...sectionFilters.filter((filter) => !overriddenFields.has(filter.field)),
-    ...applicableReportFilters,
-  ];
-};
 
 const ReportSection = ({
   report,
@@ -55,7 +40,7 @@ const ReportSection = ({
   const mergedFilters =
     hasFilterBar && section.format === 'table'
       ? mergeSectionFilters(section.filters, reportFilters)
-      : [...section.filters, ...reportFilters];
+      : [...(section.filters ?? []), ...reportFilters];
 
   // For tables, skip slicing when the filter bar is available (filters handle narrowing)
   const effectiveSlice = hasFilterBar && section.format === 'table' ? null : section.slice;

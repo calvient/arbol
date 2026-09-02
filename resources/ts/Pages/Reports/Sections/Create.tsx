@@ -111,7 +111,7 @@ const Create = ({report, series}: Props) => {
             {Object.keys(selectedSeries.filters).length > 0 && (
               <AddFilters
                 allFilters={selectedSeries.filters}
-                selectedFilters={data.filters}
+                selectedFilters={data.filters ?? []}
                 onFiltersChange={(filters) => setData('filters', filters)}
                 tableMode={data.format === 'table'}
               />

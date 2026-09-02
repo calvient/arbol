@@ -100,7 +100,7 @@ const Edit = ({series, section, report}: Props) => {
             {Object.keys(series.filters).length > 0 && (
               <AddFilters
                 allFilters={series.filters}
-                selectedFilters={data.filters}
+                selectedFilters={data.filters ?? []}
                 onFiltersChange={(filters) => setData('filters', filters)}
                 tableMode={data.format === 'table'}
               />
