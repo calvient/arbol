@@ -43,7 +43,7 @@
     "react-is": "^19.0.0",
     "recharts": "^3.0.0",
     "typescript": "^5.2.2",
-    "vite": "^7.3.2",
+    "vite": "^7.3.5",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "~3.2.4"
   }
